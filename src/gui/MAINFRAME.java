@@ -7,8 +7,8 @@ import model.NhanVien;
 
 public class MAINFRAME extends JFrame {
     private NhanVien currentUser;
-    private JPanel mainMenuPanel; // menu chính
-    private JPanel contentPanel;  // chứa tất cả các panel
+    private JPanel mainMenuPanel;
+    private JPanel contentPanel;
     private CardLayout cardLayout;
     private JLabel lblWelcome;
     private JMenuBar menuBar;
@@ -25,22 +25,21 @@ public class MAINFRAME extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
 
-        // ============= SỬ DỤNG CARDLAYOUT =============
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
         add(contentPanel, BorderLayout.CENTER);
 
-        // ============= TẠO MENU BAR =============
         createMenuBar();
 
-        // ============= PANEL MENU CHÍNH =============
         mainMenuPanel = createMainMenuPanel();
         contentPanel.add(mainMenuPanel, "menu");
 
-        // ============= PANEL QUẢN LÝ GIÀY =============
+        // Thêm các panel quản lý
+        contentPanel.add(new QuanLyNhanVien(), "nhanvien");
+        contentPanel.add(new QuanLyKhachHang(), "khachhang");
         contentPanel.add(new QuanLyGiay(), "giay");
+        contentPanel.add(new QuanLyHoaDon(), "hoadon");
 
-        // Hiển thị menu chính đầu tiên
         showMainMenuPanel();
     }
 
@@ -59,7 +58,6 @@ public class MAINFRAME extends JFrame {
         lblTitle.setForeground(Color.WHITE);
         headerPanel.add(lblTitle, BorderLayout.WEST);
 
-        // Bên phải: lời chào + nút đăng xuất
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
         rightPanel.setBackground(new Color(52, 73, 94));
 
@@ -70,10 +68,10 @@ public class MAINFRAME extends JFrame {
 
         JButton btnLogout = new JButton("Đăng Xuất");
         btnLogout.setFocusPainted(false);
-        btnLogout.setBackground(Color.WHITE); // nền trắng
-        btnLogout.setForeground(Color.RED);   // chữ đỏ
+        btnLogout.setBackground(Color.WHITE);
+        btnLogout.setForeground(Color.RED);
         btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnLogout.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15)); // bỏ viền
+        btnLogout.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         btnLogout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnLogout.addActionListener(e -> handleLogout());
 
@@ -87,10 +85,10 @@ public class MAINFRAME extends JFrame {
         centerPanel.setBackground(new Color(236, 240, 241));
         centerPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-        centerPanel.add(createDashboardCard("Quản Lý Nhân Viên", new Color(52, 152, 219), null));
-        centerPanel.add(createDashboardCard("Quản Lý Khách Hàng", new Color(46, 204, 113), null));
+        centerPanel.add(createDashboardCard("Quản Lý Nhân Viên", new Color(52, 152, 219), "nhanvien"));
+        centerPanel.add(createDashboardCard("Quản Lý Khách Hàng", new Color(46, 204, 113), "khachhang"));
         centerPanel.add(createDashboardCard("Quản Lý Giày", new Color(155, 89, 182), "giay"));
-        centerPanel.add(createDashboardCard("Quản Lý Hóa Đơn", new Color(230, 126, 34), null));
+        centerPanel.add(createDashboardCard("Quản Lý Hóa Đơn", new Color(230, 126, 34), "hoadon"));
         centerPanel.add(createDashboardCard("Quản Lý Nhập Kho", new Color(231, 76, 60), null));
         centerPanel.add(createDashboardCard("Thống Kê Báo Cáo", new Color(26, 188, 156), null));
 
@@ -139,13 +137,26 @@ public class MAINFRAME extends JFrame {
 
             @Override
             public void mouseClicked(MouseEvent e) {
-                if ("giay".equals(action)) {
-                    showQuanLyGiayPanel();
+                if (action != null) {
+                    switch (action) {
+                        case "nhanvien":
+                            showQuanLyNhanVienPanel();
+                            break;
+                        case "khachhang":
+                            showQuanLyKhachHangPanel();
+                            break;
+                        case "giay":
+                            showQuanLyGiayPanel();
+                            break;
+                        case "hoadon":
+                            showQuanLyHoaDonPanel();
+                            break;
+                        default:
+                            showNotImplemented(title);
+                            break;
+                    }
                 } else {
-                    JOptionPane.showMessageDialog(MAINFRAME.this,
-                            "Chức năng " + title + " đang được phát triển!",
-                            "Thông báo",
-                            JOptionPane.INFORMATION_MESSAGE);
+                    showNotImplemented(title);
                 }
             }
         });
@@ -156,19 +167,49 @@ public class MAINFRAME extends JFrame {
         menuBar = new JMenuBar();
         menuBar.setBackground(new Color(44, 62, 80));
 
+        // Menu Hệ Thống
         JMenu menuSystem = new JMenu("Hệ Thống");
         menuSystem.setForeground(Color.WHITE);
         menuSystem.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
+        JMenuItem itemHome = new JMenuItem("Trang Chủ");
         JMenuItem itemLogout = new JMenuItem("Đăng Xuất");
         JMenuItem itemExit = new JMenuItem("Thoát");
 
+        itemHome.addActionListener(e -> showMainMenuPanel());
         itemLogout.addActionListener(e -> handleLogout());
         itemExit.addActionListener(e -> handleExit());
 
+        menuSystem.add(itemHome);
+        menuSystem.addSeparator();
         menuSystem.add(itemLogout);
         menuSystem.add(itemExit);
+
+        // Menu Quản Lý
+        JMenu menuManagement = new JMenu("Quản Lý");
+        menuManagement.setForeground(Color.WHITE);
+        menuManagement.setFont(new Font("Segoe UI", Font.BOLD, 14));
+
+        JMenuItem itemNhanVien = new JMenuItem("Quản Lý Nhân Viên");
+        JMenuItem itemKhachHang = new JMenuItem("Quản Lý Khách Hàng");
+        JMenuItem itemGiay = new JMenuItem("Quản Lý Giày");
+        JMenuItem itemHoaDon = new JMenuItem("Quản Lý Hóa Đơn");
+        JMenuItem itemNhapKho = new JMenuItem("Quản Lý Nhập Kho");
+
+        itemNhanVien.addActionListener(e -> showQuanLyNhanVienPanel());
+        itemKhachHang.addActionListener(e -> showQuanLyKhachHangPanel());
+        itemGiay.addActionListener(e -> showQuanLyGiayPanel());
+        itemHoaDon.addActionListener(e -> showQuanLyHoaDonPanel());
+        itemNhapKho.addActionListener(e -> showNotImplemented("Quản Lý Nhập Kho"));
+
+        menuManagement.add(itemNhanVien);
+        menuManagement.add(itemKhachHang);
+        menuManagement.add(itemGiay);
+        menuManagement.add(itemHoaDon);
+        menuManagement.add(itemNhapKho);
+
         menuBar.add(menuSystem);
+        menuBar.add(menuManagement);
 
         setJMenuBar(menuBar);
     }
@@ -196,13 +237,35 @@ public class MAINFRAME extends JFrame {
         }
     }
 
-    // 👉 Chuyển về menu chính
+    private void showNotImplemented(String featureName) {
+        JOptionPane.showMessageDialog(this,
+                "Chức năng " + featureName + " đang được phát triển!",
+                "Thông báo",
+                JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    // Chuyển về menu chính
     public void showMainMenuPanel() {
         cardLayout.show(contentPanel, "menu");
     }
 
-    // 👉 Hiển thị panel Quản lý giày
+    // Hiển thị panel Quản lý nhân viên
+    public void showQuanLyNhanVienPanel() {
+        cardLayout.show(contentPanel, "nhanvien");
+    }
+
+    // Hiển thị panel Quản lý khách hàng
+    public void showQuanLyKhachHangPanel() {
+        cardLayout.show(contentPanel, "khachhang");
+    }
+
+    // Hiển thị panel Quản lý giày
     public void showQuanLyGiayPanel() {
         cardLayout.show(contentPanel, "giay");
+    }
+    
+    // Hiển thị panel Quản lý hóa đơn
+    public void showQuanLyHoaDonPanel() {
+        cardLayout.show(contentPanel, "hoadon");
     }
 }

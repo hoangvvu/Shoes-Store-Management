@@ -64,7 +64,7 @@ public class DAO_NhanVien {
     // Thêm mới nhân viên
     public boolean insert(NhanVien nv) {
         String sql = "INSERT INTO NHANVIEN (idNV, tenNV, username, password, email, phanQuyen, status) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?,)";
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -86,7 +86,7 @@ public class DAO_NhanVien {
 
     // Cập nhật nhân viên
     public boolean update(NhanVien nv) {
-        String sql = "UPDATE NHANVIEN SET tenNV = ?, username = ?, password = ?, email = ?, phanQuyen = ?, status = ?, WHERE idNV = ?";
+        String sql = "UPDATE NHANVIEN SET tenNV = ?, username = ?, password = ?, email = ?, phanQuyen = ?, status = ? WHERE idNV = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -97,7 +97,7 @@ public class DAO_NhanVien {
             ps.setString(4, nv.getEmail());
             ps.setString(5, nv.getPhanQuyen());
             ps.setString(6, nv.getStatus());
-            ps.setString(9, nv.getIdNV());
+            ps.setString(7, nv.getIdNV());
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -173,4 +173,24 @@ public class DAO_NhanVien {
         }
         return list;
     }
+    
+ // Kiểm tra username có tồn tại trong bảng NHANVIEN không
+    public boolean isUsernameExist(String username) {
+        String sql = "SELECT COUNT(*) FROM NHANVIEN WHERE username = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, username);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt(1) > 0; // true nếu có ít nhất 1 username trùng
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Lỗi isUsernameExist NhanVien: " + e.getMessage());
+        }
+        return false;
+    }
+
 }
