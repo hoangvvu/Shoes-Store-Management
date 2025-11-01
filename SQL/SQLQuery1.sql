@@ -120,7 +120,7 @@ CREATE TABLE CHITIETNHAPKHO (
     idNhapKho NVARCHAR(10),
     idGiay NVARCHAR(10),
     soLuong INT,
-    donGia FLOAT,
+    giaNhap FLOAT,      
     thanhTien FLOAT,
     status NVARCHAR(20),
     FOREIGN KEY (idNhapKho) REFERENCES NHAPKHO(idNhapKho),
@@ -165,4 +165,53 @@ INSERT INTO GIAY VALUES
 (N'G003', N'Nike Air Force 1', 40, 45, 2800000, N'Giày sneaker cổ điển', N'', N'LG003', N'HG001', N'active'),
 (N'G004', N'Puma Suede Classic', 39, 25, 1800000, N'Giày sneaker phong cách', N'', N'LG003', N'HG003', N'active'),
 (N'G005', N'Converse Chuck', 38, 60, 1500000, N'Giày vải cổ điển', N'', N'LG003', N'HG004', N'active');
+GO
+
+INSERT INTO KHACHHANG (idKH, tenKH, sdt, diaChi, tongTien, status) VALUES
+('KH001', N'Trần Văn An', '0901234567', N'123 Nguyễn Trãi, Q.1, TP.HCM', 15000000, N'Active'),
+('KH002', N'Lê Thị Bình', '0987654321', N'456 CMT8, Q.3, TP.HCM', 8500000, N'Active'),
+('KH003', N'Phạm Văn Cường', '0345123789', N'Hà Nội', 10000000, N'Active'),
+('KH004', N'Đỗ Thị Duyên', '0777888999', N'Khu phố 5, TP. Biên Hòa, Đồng Nai', 22500000, N'Inactive'),
+('KH005', N'Hoàng Minh Hải', '0912345678', N'789 Lạc Long Quân, Q. Tây Hồ, Hà Nội', 3000000000, N'Active');
+GO
+
+INSERT INTO HOADON (idHD, idNV, idKH, ngayLap, tongTien, status) VALUES
+('HD001', 'NV001', 'KH001', '2025-10-25', 5300000.00, N'Đã thanh toán'),
+('HD002', 'NV002', 'KH003', '2025-10-26', 2800000.00, N'Chờ thanh toán'),
+('HD003', 'NV003', 'KH002', '2025-10-27', 7900000.00, N'Đã thanh toán');
+GO
+
+INSERT INTO CHITIETHOADON (idCTHD, idHD, idGiay, soLuong, donGia, thanhTien, status) VALUES
+-- HD001
+('CT001', 'HD001', 'G001', 1, 2500000.00, 2500000.00, N'Hoàn thành'),
+('CT002', 'HD001', 'G003', 1, 2800000.00, 2800000.00, N'Hoàn thành'),
+-- HD002
+('CT003', 'HD002', 'G003', 1, 2800000.00, 2800000.00, N'Hoàn thành'),
+-- HD003
+('CT004', 'HD003', 'G002', 1, 3200000.00, 3200000.00, N'Hoàn thành'),
+('CT005', 'HD003', 'G004', 1, 1800000.00, 1800000.00, N'Hoàn thành'),
+('CT006', 'HD003', 'G005', 1, 1500000.00, 1500000.00, N'Hoàn thành');
+GO
+
+-- Thêm Nhà Cung Cấp
+INSERT INTO NHACUNGCAP (idNCC, tenNCC, sdt, email, diaChi, status) VALUES
+(N'NCC001', N'Công ty TNHH Nike Việt Nam', '02838292888', 'contact.vn@nike.com', N'Tòa nhà Metropolitan, 235 Đồng Khởi, Q.1, TP.HCM', N'active'),
+(N'NCC002', N'Tổng kho Sneaker Miền Nam', '0909123456', 'tongkhosneaker@gmail.com', N'Quận 10, TP.HCM', N'active');
+GO
+
+-- Thêm Phiếu Nhập Kho
+INSERT INTO NHAPKHO (idNhapKho, ngayNhap, tongTien, idNCC, idNV, status) VALUES
+(N'NK001', '2025-10-01', 255000000.00, N'NCC001', N'NV001', N'Đã hoàn thành'),
+(N'NK002', '2025-10-02', 90000000.00, N'NCC002', N'NV004', N'Đã hoàn thành');
+GO
+
+-- Thêm Chi Tiết Nhập Kho (SỬA: donGia → giaNhap)
+INSERT INTO CHITIETNHAPKHO (idCTNK, idNhapKho, idGiay, soLuong, giaNhap, thanhTien, status) VALUES
+-- Chi tiết cho Phiếu NK001
+(N'CTNK01', N'NK001', N'G001', 50, 1800000.00, 90000000.00, N'active'),
+(N'CTNK02', N'NK001', N'G002', 30, 2500000.00, 75000000.00, N'active'),
+(N'CTNK03', N'NK001', N'G003', 45, 2000000.00, 90000000.00, N'active'),
+-- Chi tiết cho Phiếu NK002
+(N'CTNK04', N'NK002', N'G004', 25, 1200000.00, 30000000.00, N'active'),
+(N'CTNK05', N'NK002', N'G005', 60, 1000000.00, 60000000.00, N'active');
 GO

@@ -5,6 +5,10 @@ import DAO.DatabaseConnection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.HashMap;
+
 
 public class DAO_ChiTietHoaDon {
     
@@ -123,32 +127,6 @@ public class DAO_ChiTietHoaDon {
         }
     }
  
-    public List<ChiTietHoaDon> getByHoaDon(String idHD) {
-        List<ChiTietHoaDon> list = new ArrayList<>();
-        String sql = "SELECT * FROM CHITIETHOADON WHERE idHD = ?";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setString(1, idHD);
-            ResultSet rs = ps.executeQuery();
-            
-            while (rs.next()) {
-            	ChiTietHoaDon cthd = new ChiTietHoaDon();
-                cthd.setIdHD(rs.getString("idHD"));
-                cthd.setIdGiay(rs.getString("idGiay"));
-                cthd.setSoLuong(rs.getInt("soLuong"));
-                cthd.setDonGia(rs.getFloat("donGia"));
-                cthd.setThanhTien(rs.getFloat("thanhTien"));
-                cthd.setStatus(rs.getString("status"));
-                list.add(cthd);
-            }
-        } catch (SQLException e) {
-            System.err.println("Lỗi getByHoaDon: " + e.getMessage());
-        }
-        return list;
-    }
- 
     public boolean deleteByHoaDon(String idHD) {
         String sql = "DELETE FROM CHITIETHOADON WHERE idHD = ?";
         
@@ -180,5 +158,58 @@ public class DAO_ChiTietHoaDon {
             System.err.println("Lỗi getTongTienByHoaDon: " + e.getMessage());
         }
         return 0;
+    }
+    
+    public List<ChiTietHoaDon> getByHoaDon(String idHD) {
+        List<ChiTietHoaDon> list = new ArrayList<>();
+        String sql = "SELECT * FROM CHITIETHOADON WHERE idHD = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, idHD);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                ChiTietHoaDon ct = new ChiTietHoaDon();
+                ct.setIdCTHD(rs.getString("idCTHD"));
+                ct.setIdHD(rs.getString("idHD"));
+                ct.setIdGiay(rs.getString("idGiay"));
+                ct.setSoLuong(rs.getInt("soLuong"));
+                ct.setDonGia(rs.getFloat("donGia"));
+                ct.setThanhTien(rs.getFloat("thanhTien"));
+                ct.setStatus(rs.getString("status"));
+                list.add(ct);
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi getByHoaDon: " + e.getMessage());
+        }
+        return list;
+    }
+
+    // Thống kê sản phẩm bán chạy
+    public Map<String, Integer> getSanPhamBanChay(Date fromDate, Date toDate) {
+        Map<String, Integer> result = new HashMap<>();
+        String sql = "SELECT c.idGiay, SUM(c.soLuong) AS tongSL " +
+                     "FROM CHITIETHOADON c " +
+                     "JOIN HOADON h ON c.idHD = h.idHD " +
+                     "WHERE h.ngayLap BETWEEN ? AND ? " +
+                     "GROUP BY c.idGiay " +
+                     "ORDER BY tongSL DESC";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setDate(1, new java.sql.Date(fromDate.getTime()));
+            ps.setDate(2, new java.sql.Date(toDate.getTime()));
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                result.put(rs.getString("idGiay"), rs.getInt("tongSL"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi getSanPhamBanChay: " + e.getMessage());
+        }
+        return result;
     }
 }

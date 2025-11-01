@@ -54,10 +54,15 @@ public class QuanLyGiay extends JPanel {
         loadData();         
         generateNextId();
         
-        // <<< YÊU CẦU 2 (Thiết lập trạng thái ban đầu)
-        // Khi mới vào, đang ở chế độ "Thêm"
         btnThem.setEnabled(true);
-    }
+        
+        txtSoLuong.setToolTipText(
+                "<html>Số lượng tự động cập nhật từ:<br>" +
+                "- TĂNG: Khi nhập kho (QuanLyNhapKho)<br>" +
+                "- GIẢM: Khi bán hàng (QuanLyHoaDon)<br>" +
+                "<b>KHÔNG được phép sửa thủ công!</b></html>"
+            );
+   }
     
     // --- Các phương thức createXXXPanel() và createStyledButton() giữ nguyên ---
     private JPanel createTitlePanel() {
@@ -153,6 +158,9 @@ public class QuanLyGiay extends JPanel {
         gbc.gridx = 0; gbc.gridy = 5;
         formPanel.add(new JLabel("Số lượng:"), gbc);
         txtSoLuong = new JTextField(15);
+        txtSoLuong.setEditable(false); // VÔ HIỆU HÓA - CHỈ HIỂN THỊ
+        txtSoLuong.setBackground(new Color(240, 240, 240));
+        txtSoLuong.setToolTipText("Số lượng tự động cập nhật từ phiếu nhập/bán hàng");
         gbc.gridx = 1;
         formPanel.add(txtSoLuong, gbc);
         
@@ -438,14 +446,13 @@ public class QuanLyGiay extends JPanel {
         if (!validateInput()) return;
         
         try {
-            // <<< YÊU CẦU 3: Kiểm tra trùng tên và size
+            // Kiểm tra trùng tên và size
             String ten = txtTen.getText().trim();
-            float size = Float.parseFloat(txtSize.getText().trim()); // Đã validate nên an toàn
+            float size = Float.parseFloat(txtSize.getText().trim());
             
-            List<Giay> allGiay = giayDAO.getAll(); // Lấy tất cả giày
+            List<Giay> allGiay = giayDAO.getAll();
             boolean exists = false;
             for (Giay giay : allGiay) {
-                // So sánh không phân biệt hoa thường
                 if (giay.getTenGiay().equalsIgnoreCase(ten) && giay.getSize() == size) {
                     exists = true;
                     break;
@@ -453,35 +460,40 @@ public class QuanLyGiay extends JPanel {
             }
             
             if (exists) {
-                JOptionPane.showMessageDialog(this, "Sản phẩm với tên và size này đã tồn tại!", 
+                JOptionPane.showMessageDialog(this, 
+                    "Sản phẩm với tên và size này đã tồn tại!", 
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return; // Dừng không thêm nữa
+                return;
             }
-            // --- Kết thúc YÊU CẦU 3 ---
             
             Giay g = new Giay();
             g.setIdGiay(txtId.getText().trim());
-            g.setTenGiay(ten); // Dùng biến đã lấy
-            g.setSize(size);   // Dùng biến đã lấy
-            g.setSoLuong(Integer.parseInt(txtSoLuong.getText().trim()));
+            g.setTenGiay(ten);
+            g.setSize(size);
+            
+            // *** QUAN TRỌNG: Số lượng ban đầu = 0 ***
+            g.setSoLuong(0);
+            
             g.setGiaBan(Float.parseFloat(txtGiaBan.getText().trim()));
             g.setMoTa(txtMoTa.getText().trim());
             g.setHinhAnh(selectedImagePath);
             
-            // SỬA: Lấy ID Loại giày từ TÊN được chọn
             String tenLoaiGiay = cboLoaiGiay.getSelectedItem().toString();
             String idLoaiGiay = loaiGiayIdMap.get(tenLoaiGiay);
             if (idLoaiGiay == null) {
-                JOptionPane.showMessageDialog(this, "Không tìm thấy ID loại giày tương ứng!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, 
+                    "Không tìm thấy ID loại giày tương ứng!", 
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             g.setIdLoaiGiay(idLoaiGiay);
             
-            // Lấy ID Hãng giày từ TÊN được chọn
             String tenHangGiay = cboHangGiay.getSelectedItem().toString();
             String idHangGiay = hangGiayIdMap.get(tenHangGiay);
             if (idHangGiay == null) {
-                JOptionPane.showMessageDialog(this, "Không tìm thấy ID hãng giày tương ứng!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, 
+                    "Không tìm thấy ID hãng giày tương ứng!", 
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             g.setIdHangGiay(idHangGiay);
@@ -489,7 +501,10 @@ public class QuanLyGiay extends JPanel {
             g.setStatus(cboStatus.getSelectedItem().toString());
             
             if (giayDAO.insert(g)) {
-                JOptionPane.showMessageDialog(this, "Thêm giày thành công!", 
+                JOptionPane.showMessageDialog(this, 
+                    "<html>Thêm giày thành công!<br><br>" +
+                    "<b>Lưu ý:</b> Số lượng hiện tại = 0<br>" +
+                    "Vui lòng vào <b>Quản lý nhập kho</b> để nhập hàng!</html>", 
                     "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 loadData();
                 lamMoi();
@@ -505,28 +520,25 @@ public class QuanLyGiay extends JPanel {
     }
     
     private void suaGiay() {
-        // <<< YÊU CẦU 1: Kiểm tra xem đã chọn sản phẩm chưa
         int selectedRow = table.getSelectedRow();
         if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn sản phẩm cần sửa từ bảng!", 
+            JOptionPane.showMessageDialog(this, 
+                "Vui lòng chọn sản phẩm cần sửa từ bảng!", 
                 "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        // --- Kết thúc YÊU CẦU 1 ---
         
         if (!validateInput()) return;
         
         try {
             String currentId = txtId.getText().trim();
             String ten = txtTen.getText().trim();
-            float size = Float.parseFloat(txtSize.getText().trim()); // Đã validate
+            float size = Float.parseFloat(txtSize.getText().trim());
             
-            // <<< YÊU CẦU 3 (Mở rộng): Kiểm tra trùng khi SỬA
-            // (Đảm bảo tên+size mới không trùng với một sản phẩm *khác*)
+            // Kiểm tra trùng khi SỬA (với sản phẩm khác)
             List<Giay> allGiay = giayDAO.getAll();
             boolean exists = false;
             for (Giay giay : allGiay) {
-                // Nếu tìm thấy giày khác có cùng tên và size
                 if (!giay.getIdGiay().equals(currentId) && 
                     giay.getTenGiay().equalsIgnoreCase(ten) && 
                     giay.getSize() == size) {
@@ -536,35 +548,48 @@ public class QuanLyGiay extends JPanel {
             }
             
             if (exists) {
-                JOptionPane.showMessageDialog(this, "Một sản phẩm khác với tên và size này đã tồn tại!", 
+                JOptionPane.showMessageDialog(this, 
+                    "Một sản phẩm khác với tên và size này đã tồn tại!", 
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            // --- Kết thúc YÊU CẦU 3 (Mở rộng) ---
+            
+            // Lấy thông tin giày hiện tại từ DB
+            Giay giayCu = giayDAO.getById(currentId);
+            if (giayCu == null) {
+                JOptionPane.showMessageDialog(this, "Không tìm thấy sản phẩm!", 
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
             
             Giay g = new Giay();
             g.setIdGiay(currentId);
             g.setTenGiay(ten);
             g.setSize(size);
-            g.setSoLuong(Integer.parseInt(txtSoLuong.getText().trim()));
+            
+            // *** QUAN TRỌNG: GIỮ NGUYÊN số lượng cũ, KHÔNG cho phép sửa ***
+            g.setSoLuong(giayCu.getSoLuong());
+            
             g.setGiaBan(Float.parseFloat(txtGiaBan.getText().trim()));
             g.setMoTa(txtMoTa.getText().trim());
             g.setHinhAnh(selectedImagePath);
             
-            // SỬA: Lấy ID Loại giày từ TÊN được chọn
             String tenLoaiGiay = cboLoaiGiay.getSelectedItem().toString();
             String idLoaiGiay = loaiGiayIdMap.get(tenLoaiGiay);
             if (idLoaiGiay == null) {
-                JOptionPane.showMessageDialog(this, "Không tìm thấy ID loại giày tương ứng!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, 
+                    "Không tìm thấy ID loại giày tương ứng!", 
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             g.setIdLoaiGiay(idLoaiGiay);
             
-            // Lấy ID Hãng giày từ TÊN được chọn
             String tenHangGiay = cboHangGiay.getSelectedItem().toString();
             String idHangGiay = hangGiayIdMap.get(tenHangGiay);
             if (idHangGiay == null) {
-                JOptionPane.showMessageDialog(this, "Không tìm thấy ID hãng giày tương ứng!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, 
+                    "Không tìm thấy ID hãng giày tương ứng!", 
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             g.setIdHangGiay(idHangGiay);
@@ -572,7 +597,11 @@ public class QuanLyGiay extends JPanel {
             g.setStatus(cboStatus.getSelectedItem().toString());
             
             if (giayDAO.update(g)) {
-                JOptionPane.showMessageDialog(this, "Cập nhật giày thành công!", 
+                JOptionPane.showMessageDialog(this, 
+                    "<html>Cập nhật giày thành công!<br><br>" +
+                    "<b>Lưu ý:</b> Số lượng không thay đổi (vẫn = " + 
+                    giayCu.getSoLuong() + ")<br>" +
+                    "Số lượng chỉ thay đổi qua Nhập kho/Bán hàng</html>", 
                     "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 loadData();
                 lamMoi();
@@ -768,20 +797,6 @@ public class QuanLyGiay extends JPanel {
             JOptionPane.showMessageDialog(this, "Size phải là số!", 
                 "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             txtSize.requestFocus();
-            return false;
-        }
-        
-        try {
-            int soLuong = Integer.parseInt(txtSoLuong.getText().trim());
-            if (soLuong < 0) {
-                JOptionPane.showMessageDialog(this, "Số lượng không được âm!", 
-                    "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-                return false;
-            }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Số lượng phải là số nguyên!", 
-                "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-            txtSoLuong.requestFocus();
             return false;
         }
         

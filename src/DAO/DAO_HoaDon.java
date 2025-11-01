@@ -5,6 +5,9 @@ import DAO.DatabaseConnection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 
 public class DAO_HoaDon {
     
@@ -213,6 +216,78 @@ public class DAO_HoaDon {
             System.err.println("Lỗi getTongDoanhThu: " + e.getMessage());
         }
         return 0;
+    }
+    
+    public List<HoaDon> getByDateRange(Date fromDate, Date toDate) {
+        List<HoaDon> list = new ArrayList<>();
+        String sql = "SELECT * FROM HOADON WHERE ngayLap BETWEEN ? AND ? ORDER BY ngayLap DESC";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setDate(1, new java.sql.Date(fromDate.getTime()));
+            ps.setDate(2, new java.sql.Date(toDate.getTime()));
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                HoaDon hd = new HoaDon();
+                hd.setIdHD(rs.getString("idHD"));
+                hd.setNgayLap(rs.getDate("ngayLap"));
+                hd.setTongTien(rs.getFloat("tongTien"));
+                hd.setIdKH(rs.getString("idKH"));
+                hd.setIdNV(rs.getString("idNV"));
+                hd.setStatus(rs.getString("status"));
+                list.add(hd);
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi getByDateRange HoaDon: " + e.getMessage());
+        }
+        return list;
+    }
+
+    // Thống kê doanh thu theo ngày
+    public Map<String, Float> getDoanhThuTheoNgay(Date fromDate, Date toDate) {
+        Map<String, Float> result = new TreeMap<>();
+        String sql = "SELECT CONVERT(VARCHAR(10), ngayLap, 103) AS ngay, SUM(tongTien) AS tongDoanhThu " +
+                     "FROM HOADON WHERE ngayLap BETWEEN ? AND ? " +
+                     "GROUP BY CONVERT(VARCHAR(10), ngayLap, 103) " +
+                     "ORDER BY CONVERT(VARCHAR(10), ngayLap, 103)";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setDate(1, new java.sql.Date(fromDate.getTime()));
+            ps.setDate(2, new java.sql.Date(toDate.getTime()));
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                result.put(rs.getString("ngay"), rs.getFloat("tongDoanhThu"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi getDoanhThuTheoNgay: " + e.getMessage());
+        }
+        return result;
+    }
+
+    // Thống kê doanh thu theo tháng
+    public Map<String, Float> getDoanhThuTheoThang() {
+        Map<String, Float> result = new TreeMap<>();
+        String sql = "SELECT FORMAT(ngayLap, 'MM/yyyy') AS thang, SUM(tongTien) AS tongDoanhThu " +
+                     "FROM HOADON " +
+                     "GROUP BY FORMAT(ngayLap, 'MM/yyyy') " +
+                     "ORDER BY FORMAT(ngayLap, 'MM/yyyy')";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                result.put(rs.getString("thang"), rs.getFloat("tongDoanhThu"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi getDoanhThuTheoThang: " + e.getMessage());
+        }
+        return result;
     }
    
 }

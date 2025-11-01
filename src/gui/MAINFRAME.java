@@ -34,11 +34,13 @@ public class MAINFRAME extends JFrame {
         mainMenuPanel = createMainMenuPanel();
         contentPanel.add(mainMenuPanel, "menu");
 
-        // Thêm các panel quản lý
+        // Thêm các panel quản lý - TRUYỀN currentUser nếu cần
         contentPanel.add(new QuanLyNhanVien(), "nhanvien");
         contentPanel.add(new QuanLyKhachHang(), "khachhang");
         contentPanel.add(new QuanLyGiay(), "giay");
-        contentPanel.add(new QuanLyHoaDon(), "hoadon");
+        contentPanel.add(new QuanLyHoaDon(currentUser), "hoadon");
+        contentPanel.add(new QuanLyNhapKho(currentUser), "nhapkho");
+        contentPanel.add(new QuanLyThongKe(), "thongke"); // ✅ THÊM MỚI
 
         showMainMenuPanel();
     }
@@ -89,8 +91,8 @@ public class MAINFRAME extends JFrame {
         centerPanel.add(createDashboardCard("Quản Lý Khách Hàng", new Color(46, 204, 113), "khachhang"));
         centerPanel.add(createDashboardCard("Quản Lý Giày", new Color(155, 89, 182), "giay"));
         centerPanel.add(createDashboardCard("Quản Lý Hóa Đơn", new Color(230, 126, 34), "hoadon"));
-        centerPanel.add(createDashboardCard("Quản Lý Nhập Kho", new Color(231, 76, 60), null));
-        centerPanel.add(createDashboardCard("Thống Kê Báo Cáo", new Color(26, 188, 156), null));
+        centerPanel.add(createDashboardCard("Quản Lý Nhập Kho", new Color(231, 76, 60), "nhapkho"));
+        centerPanel.add(createDashboardCard("Thống Kê Báo Cáo", new Color(26, 188, 156), "thongke")); // ✅ SỬA LẠI
 
         mainPanel.add(centerPanel, BorderLayout.CENTER);
 
@@ -140,24 +142,21 @@ public class MAINFRAME extends JFrame {
                 if (action != null) {
                     switch (action) {
                         case "nhanvien":
-                            showQuanLyNhanVienPanel();
-                            break;
+                            showQuanLyNhanVienPanel(); break;
                         case "khachhang":
-                            showQuanLyKhachHangPanel();
-                            break;
+                            showQuanLyKhachHangPanel(); break;
                         case "giay":
-                            showQuanLyGiayPanel();
-                            break;
+                            showQuanLyGiayPanel(); break;
                         case "hoadon":
-                            showQuanLyHoaDonPanel();
-                            break;
+                            showQuanLyHoaDonPanel(); break;
+                        case "nhapkho":
+                            showQuanLyNhapKhoPanel(); break;
+                        case "thongke": // ✅ THÊM MỚI
+                            showQuanLyThongKePanel(); break;
                         default:
-                            showNotImplemented(title);
-                            break;
+                            showNotImplemented(title); break;
                     }
-                } else {
-                    showNotImplemented(title);
-                }
+                } else showNotImplemented(title);
             }
         });
         return card;
@@ -167,7 +166,6 @@ public class MAINFRAME extends JFrame {
         menuBar = new JMenuBar();
         menuBar.setBackground(new Color(44, 62, 80));
 
-        // Menu Hệ Thống
         JMenu menuSystem = new JMenu("Hệ Thống");
         menuSystem.setForeground(Color.WHITE);
         menuSystem.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -185,7 +183,6 @@ public class MAINFRAME extends JFrame {
         menuSystem.add(itemLogout);
         menuSystem.add(itemExit);
 
-        // Menu Quản Lý
         JMenu menuManagement = new JMenu("Quản Lý");
         menuManagement.setForeground(Color.WHITE);
         menuManagement.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -195,18 +192,21 @@ public class MAINFRAME extends JFrame {
         JMenuItem itemGiay = new JMenuItem("Quản Lý Giày");
         JMenuItem itemHoaDon = new JMenuItem("Quản Lý Hóa Đơn");
         JMenuItem itemNhapKho = new JMenuItem("Quản Lý Nhập Kho");
+        JMenuItem itemThongKe = new JMenuItem("Thống Kê Báo Cáo"); // ✅ THÊM MỚI
 
         itemNhanVien.addActionListener(e -> showQuanLyNhanVienPanel());
         itemKhachHang.addActionListener(e -> showQuanLyKhachHangPanel());
         itemGiay.addActionListener(e -> showQuanLyGiayPanel());
         itemHoaDon.addActionListener(e -> showQuanLyHoaDonPanel());
-        itemNhapKho.addActionListener(e -> showNotImplemented("Quản Lý Nhập Kho"));
+        itemNhapKho.addActionListener(e -> showQuanLyNhapKhoPanel());
+        itemThongKe.addActionListener(e -> showQuanLyThongKePanel()); // ✅ CẬP NHẬT
 
         menuManagement.add(itemNhanVien);
         menuManagement.add(itemKhachHang);
         menuManagement.add(itemGiay);
         menuManagement.add(itemHoaDon);
         menuManagement.add(itemNhapKho);
+        menuManagement.add(itemThongKe);
 
         menuBar.add(menuSystem);
         menuBar.add(menuManagement);
@@ -219,7 +219,6 @@ public class MAINFRAME extends JFrame {
                 "Bạn có chắc chắn muốn đăng xuất?",
                 "Xác nhận",
                 JOptionPane.YES_NO_OPTION);
-
         if (choice == JOptionPane.YES_OPTION) {
             this.dispose();
             new LoginForm().setVisible(true);
@@ -231,10 +230,7 @@ public class MAINFRAME extends JFrame {
                 "Bạn có chắc chắn muốn thoát chương trình?",
                 "Xác nhận",
                 JOptionPane.YES_NO_OPTION);
-
-        if (choice == JOptionPane.YES_OPTION) {
-            System.exit(0);
-        }
+        if (choice == JOptionPane.YES_OPTION) System.exit(0);
     }
 
     private void showNotImplemented(String featureName) {
@@ -244,28 +240,11 @@ public class MAINFRAME extends JFrame {
                 JOptionPane.INFORMATION_MESSAGE);
     }
 
-    // Chuyển về menu chính
-    public void showMainMenuPanel() {
-        cardLayout.show(contentPanel, "menu");
-    }
-
-    // Hiển thị panel Quản lý nhân viên
-    public void showQuanLyNhanVienPanel() {
-        cardLayout.show(contentPanel, "nhanvien");
-    }
-
-    // Hiển thị panel Quản lý khách hàng
-    public void showQuanLyKhachHangPanel() {
-        cardLayout.show(contentPanel, "khachhang");
-    }
-
-    // Hiển thị panel Quản lý giày
-    public void showQuanLyGiayPanel() {
-        cardLayout.show(contentPanel, "giay");
-    }
-    
-    // Hiển thị panel Quản lý hóa đơn
-    public void showQuanLyHoaDonPanel() {
-        cardLayout.show(contentPanel, "hoadon");
-    }
+    public void showMainMenuPanel() { cardLayout.show(contentPanel, "menu"); }
+    public void showQuanLyNhanVienPanel() { cardLayout.show(contentPanel, "nhanvien"); }
+    public void showQuanLyKhachHangPanel() { cardLayout.show(contentPanel, "khachhang"); }
+    public void showQuanLyGiayPanel() { cardLayout.show(contentPanel, "giay"); }
+    public void showQuanLyHoaDonPanel() { cardLayout.show(contentPanel, "hoadon"); }
+    public void showQuanLyNhapKhoPanel() { cardLayout.show(contentPanel, "nhapkho"); }
+    public void showQuanLyThongKePanel() { cardLayout.show(contentPanel, "thongke"); } // ✅ THÊM MỚI
 }
