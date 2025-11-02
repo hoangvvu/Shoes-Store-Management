@@ -259,7 +259,7 @@ public class QuanLyGiay extends JPanel {
         btnTimKiem = createStyledButton("Tìm", new Color(41, 128, 185));
         btnTimKiem.setPreferredSize(new Dimension(80, 30));
         searchPanel.add(btnTimKiem);
-        btnTimKiem.addActionListener(e -> timKiem());
+        btnTimKiem.addActionListener(e -> timKiem(true));
         searchPanel.add(Box.createHorizontalStrut(20));
         JLabel lblLocHang = new JLabel("Lọc hãng:");
         lblLocHang.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -269,15 +269,14 @@ public class QuanLyGiay extends JPanel {
         cboLocHang.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         cboLocHang.addActionListener(e -> locTheoHang());
         searchPanel.add(cboLocHang);
+     // Tự động tìm kiếm khi thay đổi text
         txtTimKiem.addKeyListener(new KeyAdapter() {
+            @Override
             public void keyReleased(KeyEvent e) {
-                if (txtTimKiem.getText().trim().isEmpty()) {
-                    loadData();
-                }
-            }
-            public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    timKiem();
+                    timKiem(true); // Enter: có thông báo
+                } else {
+                    timKiem(false); // Gõ: không thông báo
                 }
             }
         });
@@ -617,6 +616,11 @@ public class QuanLyGiay extends JPanel {
     }
     
     private void timKiem() {
+        timKiem(false); // Gọi với showMessage = false (tìm tự động)
+    }
+
+    // Phương thức tìm kiếm với tùy chọn hiển thị thông báo
+    private void timKiem(boolean showMessage) {
         String keyword = txtTimKiem.getText().trim().toLowerCase();
 
         if (keyword.isEmpty()) {
@@ -626,6 +630,7 @@ public class QuanLyGiay extends JPanel {
 
         tableModel.setRowCount(0);
         List<Giay> list = giayDAO.getAll();
+        int count = 0;
 
         for (Giay g : list) {
             String id = g.getIdGiay().toLowerCase();
@@ -633,7 +638,9 @@ public class QuanLyGiay extends JPanel {
             String tenLoai = loaiGiayMap.getOrDefault(g.getIdLoaiGiay(), g.getIdLoaiGiay());
             String tenHang = hangGiayMap.getOrDefault(g.getIdHangGiay(), g.getIdHangGiay());
 
-            if (id.contains(keyword) || ten.contains(keyword) || tenLoai.toLowerCase().contains(keyword) || tenHang.toLowerCase().contains(keyword)) {
+            if (id.contains(keyword) || ten.contains(keyword) || 
+                tenLoai.toLowerCase().contains(keyword) || 
+                tenHang.toLowerCase().contains(keyword)) {
                 
                 ImageIcon imageIcon = loadImageIcon(g.getHinhAnh());
                 
@@ -649,11 +656,14 @@ public class QuanLyGiay extends JPanel {
                     g.getMoTa(),
                     g.getStatus()
                 });
+                count++;
             }
         }
 
-        if (tableModel.getRowCount() == 0) {
-            JOptionPane.showMessageDialog(this, "Không tìm thấy giày nào!",
+        // CHỈ hiện thông báo khi showMessage = true (nhấn Enter hoặc nút Tìm)
+        if (count == 0 && showMessage) {
+            JOptionPane.showMessageDialog(this, 
+                "Không tìm thấy giày nào khớp với từ khóa: " + keyword,
                 "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         }
     }

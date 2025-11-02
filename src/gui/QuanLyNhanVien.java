@@ -7,6 +7,7 @@ import java.awt.event.*;
 import DAO.DAO_NhanVien;
 import model.NhanVien;
 import java.util.List;
+import java.util.ArrayList;
 
 public class QuanLyNhanVien extends JPanel {
     private JTable table;
@@ -293,13 +294,15 @@ public class QuanLyNhanVien extends JPanel {
         btnTimKiem.setPreferredSize(new Dimension(100, 30));
         searchPanel.add(btnTimKiem);
         
-        btnTimKiem.addActionListener(e -> timKiem());
+        btnTimKiem.addActionListener(e -> timKiem(true));
         
-        // Nhấn Enter để tìm
         txtTimKiem.addKeyListener(new KeyAdapter() {
-            public void keyPressed(KeyEvent e) {
+            @Override
+            public void keyReleased(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    timKiem();
+                    timKiem(true); // Nhấn Enter: hiển thị thông báo
+                } else {
+                    timKiem(false); // Gõ bình thường: KHÔNG hiển thị thông báo
                 }
             }
         });
@@ -567,18 +570,42 @@ public class QuanLyNhanVien extends JPanel {
     }
     
     private void timKiem() {
-        // ... (Không thay đổi)
+        timKiem(false); // Gọi với showMessage = false (tìm tự động)
+    }
+
+    // Phương thức tìm kiếm với tùy chọn hiển thị thông báo
+    private void timKiem(boolean showMessage) {
         String keyword = txtTimKiem.getText().trim();
         
+        // Nếu không có từ khóa, hiển thị lại toàn bộ dữ liệu
         if (keyword.isEmpty()) {
             loadData();
             return;
         }
         
         tableModel.setRowCount(0);
-        List<NhanVien> list = nhanVienDAO.searchByName(keyword);
+        List<NhanVien> allList = nhanVienDAO.getAll();
+        List<NhanVien> resultList = new ArrayList<>();
         
-        for (NhanVien nv : list) {
+        // Chuyển keyword về không dấu, lowercase để so sánh
+        String normalizedKeyword = removeAccent(keyword.toLowerCase());
+        
+        for (NhanVien nv : allList) {
+            // Tìm theo mã nhân viên (chính xác, không phân biệt hoa thường)
+            if (nv.getIdNV().toLowerCase().contains(keyword.toLowerCase())) {
+                resultList.add(nv);
+                continue;
+            }
+            
+            // Tìm theo tên (không phân biệt hoa thường, có dấu/không dấu)
+            String normalizedName = removeAccent(nv.getTenNV().toLowerCase());
+            if (normalizedName.contains(normalizedKeyword)) {
+                resultList.add(nv);
+            }
+        }
+        
+        // Hiển thị kết quả
+        for (NhanVien nv : resultList) {
             tableModel.addRow(new Object[]{
                 nv.getIdNV(),
                 nv.getTenNV(),
@@ -589,10 +616,20 @@ public class QuanLyNhanVien extends JPanel {
             });
         }
         
-        if (list.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Không tìm thấy nhân viên nào!", 
+        // CHỈ hiện thông báo khi showMessage = true (nhấn Enter hoặc nút Tìm)
+        if (resultList.isEmpty() && showMessage) {
+            JOptionPane.showMessageDialog(this, 
+                "Không tìm thấy nhân viên nào khớp với từ khóa: " + keyword, 
                 "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         }
+    }
+
+    // Phương thức bỏ dấu tiếng Việt
+    private String removeAccent(String s) {
+        String temp = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD);
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        temp = pattern.matcher(temp).replaceAll("");
+        return temp.replaceAll("đ", "d").replaceAll("Đ", "D");
     }
     
     // Giữ nguyên logic vô hiệu hóa các trường không cho phép sửa

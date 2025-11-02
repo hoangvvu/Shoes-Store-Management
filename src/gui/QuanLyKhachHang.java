@@ -8,6 +8,7 @@ import java.text.DecimalFormat;
 import DAO.DAO_KhachHang;
 import model.KhachHang;
 import java.util.List;
+import java.util.ArrayList;
 
 public class QuanLyKhachHang extends JPanel {
     private JTable table;
@@ -195,7 +196,7 @@ public class QuanLyKhachHang extends JPanel {
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         searchPanel.setBackground(new Color(236, 240, 241));
         
-        JLabel lblSearch = new JLabel("Tra cứu SĐT:");
+        JLabel lblSearch = new JLabel("Tìm kiếm:");
         lblSearch.setFont(new Font("Segoe UI", Font.BOLD, 14));
         searchPanel.add(lblSearch);
         
@@ -203,22 +204,20 @@ public class QuanLyKhachHang extends JPanel {
         txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         searchPanel.add(txtTimKiem);
         
-        btnTraCuu = createStyledButton("Tra cứu", new Color(41, 128, 185));
+        btnTraCuu = createStyledButton("Tìm", new Color(41, 128, 185));
         btnTraCuu.setPreferredSize(new Dimension(100, 30));
         searchPanel.add(btnTraCuu);
         
-        btnTraCuu.addActionListener(e -> traCuuTheoSDT());
+        btnTraCuu.addActionListener(e -> traCuuTheoSDT(true));
         
-        // Nhấn Enter để tra cứu
+
         txtTimKiem.addKeyListener(new KeyAdapter() {
+            @Override
             public void keyReleased(KeyEvent e) {
-                if (txtTimKiem.getText().trim().isEmpty()) {
-                    loadData();
-                }
-            }
-            public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    traCuuTheoSDT();
+                    traCuuTheoSDT(true);
+                } else {
+                    traCuuTheoSDT(false); 
                 }
             }
         });
@@ -373,19 +372,42 @@ public class QuanLyKhachHang extends JPanel {
     }
     
     private void traCuuTheoSDT() {
-        String sdt = txtTimKiem.getText().trim();
+        traCuuTheoSDT(false); // Gọi với showMessage = false (tìm tự động)
+    }
+
+    // Phương thức tìm kiếm với tùy chọn hiển thị thông báo
+    private void traCuuTheoSDT(boolean showMessage) {
+        String keyword = txtTimKiem.getText().trim();
         
-        if (sdt.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập số điện thoại!", 
-                "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-            txtTimKiem.requestFocus();
+        // Nếu không có từ khóa, hiển thị lại toàn bộ dữ liệu
+        if (keyword.isEmpty()) {
+            loadData();
             return;
         }
         
-        KhachHang kh = khachHangDAO.getBySDT(sdt);
+        tableModel.setRowCount(0);
+        List<KhachHang> allList = khachHangDAO.getAll();
+        List<KhachHang> resultList = new ArrayList<>();
         
-        if (kh != null) {
-            tableModel.setRowCount(0);
+        // Chuyển keyword về không dấu, lowercase để so sánh
+        String normalizedKeyword = removeAccent(keyword.toLowerCase());
+        
+        for (KhachHang kh : allList) {
+            // Tìm theo số điện thoại (chính xác)
+            if (kh.getSdt().contains(keyword)) {
+                resultList.add(kh);
+                continue;
+            }
+            
+            // Tìm theo tên (không phân biệt hoa thường, có dấu/không dấu)
+            String normalizedName = removeAccent(kh.getTenKH().toLowerCase());
+            if (normalizedName.contains(normalizedKeyword)) {
+                resultList.add(kh);
+            }
+        }
+        
+        // Hiển thị kết quả
+        for (KhachHang kh : resultList) {
             tableModel.addRow(new Object[]{
                 kh.getIdKH(),
                 kh.getTenKH(),
@@ -394,21 +416,32 @@ public class QuanLyKhachHang extends JPanel {
                 df.format(kh.getTongTien()) + " đ",
                 kh.getStatus()
             });
-            
-            // Hiển thị thông tin lên form
+        }
+        
+        // CHỈ hiện thông báo khi showMessage = true (nhấn Enter hoặc nút Tìm)
+        if (resultList.isEmpty() && showMessage) {
+            JOptionPane.showMessageDialog(this, 
+                "Không tìm thấy khách hàng nào khớp với từ khóa: " + keyword, 
+                "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        } else if (resultList.size() == 1) {
+            // Nếu chỉ có 1 kết quả, tự động hiển thị lên form
+            KhachHang kh = resultList.get(0);
             txtId.setText(kh.getIdKH());
             txtTen.setText(kh.getTenKH());
             txtSdt.setText(kh.getSdt());
             txtDiaChi.setText(kh.getDiaChi());
             txtTongTien.setText(String.valueOf((int)kh.getTongTien()));
             cboStatus.setSelectedItem(kh.getStatus());
-            
-        } else {
-            JOptionPane.showMessageDialog(this, 
-                "Không tìm thấy khách hàng có SĐT: " + sdt, 
-                "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-            loadData();
+            table.setRowSelectionInterval(0, 0);
         }
+    }
+    
+    // Phương thức bỏ dấu tiếng Việt
+    private String removeAccent(String s) {
+        String temp = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD);
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        temp = pattern.matcher(temp).replaceAll("");
+        return temp.replaceAll("đ", "d").replaceAll("Đ", "D");
     }
     
     private void hienThiThongTin(int row) {
