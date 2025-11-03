@@ -7,11 +7,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DAO_NhanVien {
+    
+    // Danh sách đầy đủ các cột trong bảng NHANVIEN (đã cập nhật)
+    private static final String FULL_COLUMNS = "idNV, tenNV, ngaySinh, gioiTinh, sdt, diaChi, ngayVaoLam, username, password, idPQ, status";
 
     // Lấy tất cả nhân viên
     public List<NhanVien> getAll() {
         List<NhanVien> list = new ArrayList<>();
-        String sql = "SELECT * FROM NHANVIEN";
+        String sql = "SELECT " + FULL_COLUMNS + " FROM NHANVIEN";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -21,10 +24,14 @@ public class DAO_NhanVien {
             	NhanVien nv = new NhanVien();
                 nv.setIdNV(rs.getString("idNV"));
                 nv.setTenNV(rs.getString("tenNV"));
+                nv.setNgaySinh(rs.getDate("ngaySinh")); // Lấy ngày sinh
+                nv.setGioiTinh(rs.getString("gioiTinh")); // Lấy giới tính
+                nv.setSdt(rs.getString("sdt")); // Lấy sdt
+                nv.setDiaChi(rs.getString("diaChi")); // Lấy địa chỉ
+                nv.setNgayVaoLam(rs.getDate("ngayVaoLam")); // Lấy ngày vào làm
                 nv.setUsername(rs.getString("username"));
                 nv.setPassword(rs.getString("password"));
-                nv.setEmail(rs.getString("email"));
-                nv.setPhanQuyen(rs.getString("phanQuyen"));
+                nv.setIdPQ(rs.getString("idPQ")); // Đổi từ phanQuyen thành idPQ
                 nv.setStatus(rs.getString("status"));
                 list.add(nv);
             }
@@ -36,7 +43,7 @@ public class DAO_NhanVien {
 
     // Lấy nhân viên theo ID
     public NhanVien getById(String idNV) {
-        String sql = "SELECT * FROM NHANVIEN WHERE idNV = ?";
+        String sql = "SELECT " + FULL_COLUMNS + " FROM NHANVIEN WHERE idNV = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -48,10 +55,14 @@ public class DAO_NhanVien {
             	NhanVien nv = new NhanVien();
                 nv.setIdNV(rs.getString("idNV"));
                 nv.setTenNV(rs.getString("tenNV"));
+                nv.setNgaySinh(rs.getDate("ngaySinh"));
+                nv.setGioiTinh(rs.getString("gioiTinh"));
+                nv.setSdt(rs.getString("sdt"));
+                nv.setDiaChi(rs.getString("diaChi"));
+                nv.setNgayVaoLam(rs.getDate("ngayVaoLam"));
                 nv.setUsername(rs.getString("username"));
                 nv.setPassword(rs.getString("password"));
-                nv.setEmail(rs.getString("email"));
-                nv.setPhanQuyen(rs.getString("phanQuyen"));
+                nv.setIdPQ(rs.getString("idPQ"));
                 nv.setStatus(rs.getString("status"));
                 return nv;
             }
@@ -63,19 +74,24 @@ public class DAO_NhanVien {
 
     // Thêm mới nhân viên
     public boolean insert(NhanVien nv) {
-        String sql = "INSERT INTO NHANVIEN (idNV, tenNV, username, password, email, phanQuyen, status) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        // Cập nhật câu SQL để thêm 5 cột mới và sửa idPQ
+        String sql = "INSERT INTO NHANVIEN (" + FULL_COLUMNS + ") "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"; // 11 tham số
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, nv.getIdNV());
             ps.setString(2, nv.getTenNV());
-            ps.setString(3, nv.getUsername());
-            ps.setString(4, nv.getPassword());
-            ps.setString(5, nv.getEmail());
-            ps.setString(6, nv.getPhanQuyen());
-            ps.setString(7, nv.getStatus());
+            ps.setDate(3, nv.getNgaySinh()); // Set ngày sinh
+            ps.setString(4, nv.getGioiTinh()); // Set giới tính
+            ps.setString(5, nv.getSdt()); // Set sdt
+            ps.setString(6, nv.getDiaChi()); // Set địa chỉ
+            ps.setDate(7, nv.getNgayVaoLam()); // Set ngày vào làm
+            ps.setString(8, nv.getUsername());
+            ps.setString(9, nv.getPassword());
+            ps.setString(10, nv.getIdPQ()); // Set idPQ
+            ps.setString(11, nv.getStatus());
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -86,18 +102,23 @@ public class DAO_NhanVien {
 
     // Cập nhật nhân viên
     public boolean update(NhanVien nv) {
-        String sql = "UPDATE NHANVIEN SET tenNV = ?, username = ?, password = ?, email = ?, phanQuyen = ?, status = ? WHERE idNV = ?";
+        // Cập nhật câu SQL để cập nhật 5 cột mới và sửa idPQ
+        String sql = "UPDATE NHANVIEN SET tenNV = ?, ngaySinh = ?, gioiTinh = ?, sdt = ?, diaChi = ?, ngayVaoLam = ?, username = ?, password = ?, idPQ = ?, status = ? WHERE idNV = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, nv.getTenNV());
-            ps.setString(2, nv.getUsername());
-            ps.setString(3, nv.getPassword());
-            ps.setString(4, nv.getEmail());
-            ps.setString(5, nv.getPhanQuyen());
-            ps.setString(6, nv.getStatus());
-            ps.setString(7, nv.getIdNV());
+            ps.setDate(2, nv.getNgaySinh()); // Set ngày sinh
+            ps.setString(3, nv.getGioiTinh()); // Set giới tính
+            ps.setString(4, nv.getSdt()); // Set sdt
+            ps.setString(5, nv.getDiaChi()); // Set địa chỉ
+            ps.setDate(6, nv.getNgayVaoLam()); // Set ngày vào làm
+            ps.setString(7, nv.getUsername());
+            ps.setString(8, nv.getPassword());
+            ps.setString(9, nv.getIdPQ()); // Set idPQ
+            ps.setString(10, nv.getStatus());
+            ps.setString(11, nv.getIdNV());
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -105,6 +126,8 @@ public class DAO_NhanVien {
             return false;
         }
     }
+    
+    // Các phương thức login, searchByName, isUsernameExist được cập nhật SQL SELECT đầy đủ
 
     public boolean delete(String idNV) {
         String sql = "DELETE FROM NHANVIEN WHERE idNV = ?";
@@ -121,7 +144,7 @@ public class DAO_NhanVien {
     }
 
     public NhanVien login(String username, String password) {
-        String sql = "SELECT * FROM NHANVIEN WHERE username = ? AND password = ?";
+        String sql = "SELECT " + FULL_COLUMNS + " FROM NHANVIEN WHERE username = ? AND password = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -134,10 +157,14 @@ public class DAO_NhanVien {
             	NhanVien nv = new NhanVien();
                 nv.setIdNV(rs.getString("idNV"));
                 nv.setTenNV(rs.getString("tenNV"));
+                nv.setNgaySinh(rs.getDate("ngaySinh"));
+                nv.setGioiTinh(rs.getString("gioiTinh"));
+                nv.setSdt(rs.getString("sdt"));
+                nv.setDiaChi(rs.getString("diaChi"));
+                nv.setNgayVaoLam(rs.getDate("ngayVaoLam"));
                 nv.setUsername(rs.getString("username"));
                 nv.setPassword(rs.getString("password"));
-                nv.setEmail(rs.getString("email"));
-                nv.setPhanQuyen(rs.getString("phanQuyen"));
+                nv.setIdPQ(rs.getString("idPQ"));
                 nv.setStatus(rs.getString("status"));
                 return nv;
             }
@@ -149,7 +176,7 @@ public class DAO_NhanVien {
 
     public List<NhanVien> searchByName(String tenNV) {
         List<NhanVien> list = new ArrayList<>();
-        String sql = "SELECT * FROM NHANVIEN WHERE tenNV LIKE ?";
+        String sql = "SELECT " + FULL_COLUMNS + " FROM NHANVIEN WHERE tenNV LIKE ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -161,10 +188,14 @@ public class DAO_NhanVien {
             	NhanVien nv = new NhanVien();
                 nv.setIdNV(rs.getString("idNV"));
                 nv.setTenNV(rs.getString("tenNV"));
+                nv.setNgaySinh(rs.getDate("ngaySinh"));
+                nv.setGioiTinh(rs.getString("gioiTinh"));
+                nv.setSdt(rs.getString("sdt"));
+                nv.setDiaChi(rs.getString("diaChi"));
+                nv.setNgayVaoLam(rs.getDate("ngayVaoLam"));
                 nv.setUsername(rs.getString("username"));
                 nv.setPassword(rs.getString("password"));
-                nv.setEmail(rs.getString("email"));
-                nv.setPhanQuyen(rs.getString("phanQuyen"));
+                nv.setIdPQ(rs.getString("idPQ"));
                 nv.setStatus(rs.getString("status"));
                 list.add(nv);
             }
@@ -174,7 +205,6 @@ public class DAO_NhanVien {
         return list;
     }
     
- // Kiểm tra username có tồn tại trong bảng NHANVIEN không
     public boolean isUsernameExist(String username) {
         String sql = "SELECT COUNT(*) FROM NHANVIEN WHERE username = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -184,7 +214,7 @@ public class DAO_NhanVien {
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                return rs.getInt(1) > 0; // true nếu có ít nhất 1 username trùng
+                return rs.getInt(1) > 0;
             }
 
         } catch (SQLException e) {
@@ -192,5 +222,4 @@ public class DAO_NhanVien {
         }
         return false;
     }
-
 }

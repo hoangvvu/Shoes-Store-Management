@@ -5,19 +5,23 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import DAO.DAO_KhachHang;
 import model.KhachHang;
 import java.util.List;
 import java.util.ArrayList;
+import com.toedter.calendar.JDateChooser;
 
 public class QuanLyKhachHang extends JPanel {
     private JTable table;
     private DefaultTableModel tableModel;
     private JTextField txtId, txtTen, txtSdt, txtDiaChi, txtTongTien, txtTimKiem;
-    private JComboBox<String> cboStatus;
+    private JDateChooser dateNgaySinh;
+    private JComboBox<String> cboStatus, cboGioiTinh;
     private JButton btnThem, btnSua, btnLamMoi, btnTraCuu;
     private DAO_KhachHang khachHangDAO;
     private DecimalFormat df = new DecimalFormat("#,###");
+    private SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
     
     public QuanLyKhachHang() {
         khachHangDAO = new DAO_KhachHang();
@@ -46,7 +50,7 @@ public class QuanLyKhachHang extends JPanel {
         JButton btnBack = new JButton("← Quay lại");
         btnBack.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btnBack.setBackground(new Color(52, 152, 219));
-        btnBack.setForeground(Color.RED);
+        btnBack.setForeground(Color.WHITE);
         btnBack.setFocusPainted(false);
         btnBack.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         btnBack.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -73,7 +77,7 @@ public class QuanLyKhachHang extends JPanel {
 
     private JPanel createFormPanel() {
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setPreferredSize(new Dimension(350, 0));
+        mainPanel.setPreferredSize(new Dimension(380, 0));
         mainPanel.setBackground(Color.WHITE);
         mainPanel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(189, 195, 199), 1),
@@ -93,9 +97,9 @@ public class QuanLyKhachHang extends JPanel {
         formPanel.add(lblFormTitle, gbc);
         gbc.gridwidth = 1;
         
-        // Mã khách hàng (tự động)
+        // Mã khách hàng
         gbc.gridx = 0; gbc.gridy = 1;
-        formPanel.add(new JLabel("Mã KH:"), gbc);
+        formPanel.add(new JLabel("Mã khách hàng:"), gbc);
         txtId = new JTextField(15);
         txtId.setEditable(false);
         txtId.setBackground(new Color(240, 240, 240));
@@ -104,27 +108,43 @@ public class QuanLyKhachHang extends JPanel {
         
         // Tên khách hàng
         gbc.gridx = 0; gbc.gridy = 2;
-        formPanel.add(new JLabel("Tên KH:"), gbc);
+        formPanel.add(new JLabel("Tên khách hàng:"), gbc);
         txtTen = new JTextField(15);
         gbc.gridx = 1;
         formPanel.add(txtTen, gbc);
         
-        // Số điện thoại
+        // Ngày sinh
         gbc.gridx = 0; gbc.gridy = 3;
+        formPanel.add(new JLabel("Ngày sinh:"), gbc);
+        dateNgaySinh = new JDateChooser();
+        dateNgaySinh.setDateFormatString("dd/MM/yyyy");
+        dateNgaySinh.setPreferredSize(new Dimension(150, 25));
+        gbc.gridx = 1;
+        formPanel.add(dateNgaySinh, gbc);
+        
+        // Giới tính
+        gbc.gridx = 0; gbc.gridy = 4;
+        formPanel.add(new JLabel("Giới tính:"), gbc);
+        cboGioiTinh = new JComboBox<>(new String[]{"Nam", "Nữ", "Khác"});
+        gbc.gridx = 1;
+        formPanel.add(cboGioiTinh, gbc);
+        
+        // Số điện thoại
+        gbc.gridx = 0; gbc.gridy = 5;
         formPanel.add(new JLabel("Số điện thoại:"), gbc);
         txtSdt = new JTextField(15);
         gbc.gridx = 1;
         formPanel.add(txtSdt, gbc);
         
         // Địa chỉ
-        gbc.gridx = 0; gbc.gridy = 4;
+        gbc.gridx = 0; gbc.gridy = 6;
         formPanel.add(new JLabel("Địa chỉ:"), gbc);
         txtDiaChi = new JTextField(15);
         gbc.gridx = 1;
         formPanel.add(txtDiaChi, gbc);
         
-        // Tổng tiền (chỉ đọc)
-        gbc.gridx = 0; gbc.gridy = 5;
+        // Tổng tiền
+        gbc.gridx = 0; gbc.gridy = 7;
         formPanel.add(new JLabel("Tổng tiền:"), gbc);
         txtTongTien = new JTextField(15);
         txtTongTien.setEditable(false);
@@ -134,9 +154,9 @@ public class QuanLyKhachHang extends JPanel {
         formPanel.add(txtTongTien, gbc);
         
         // Trạng thái
-        gbc.gridx = 0; gbc.gridy = 6;
+        gbc.gridx = 0; gbc.gridy = 8;
         formPanel.add(new JLabel("Trạng thái:"), gbc);
-        cboStatus = new JComboBox<>(new String[]{"active", "inactive"});
+        cboStatus = new JComboBox<>(new String[]{"Hoạt động", "Ngừng hoạt động"});
         gbc.gridx = 1;
         formPanel.add(cboStatus, gbc);
         
@@ -210,7 +230,6 @@ public class QuanLyKhachHang extends JPanel {
         
         btnTraCuu.addActionListener(e -> traCuuTheoSDT(true));
         
-
         txtTimKiem.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
@@ -225,8 +244,8 @@ public class QuanLyKhachHang extends JPanel {
         panel.add(searchPanel, BorderLayout.NORTH);
         
         // Bảng dữ liệu
-        String[] columns = {"Mã KH", "Tên khách hàng", "Số điện thoại", 
-                           "Địa chỉ", "Tổng tiền", "Trạng thái"};
+        String[] columns = {"Mã khách hàng", "Tên khách hàng", "Ngày sinh", "Giới tính",
+                           "Số điện thoại", "Địa chỉ", "Tổng tiền", "Trạng thái"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -268,12 +287,11 @@ public class QuanLyKhachHang extends JPanel {
         
         for (KhachHang kh : list) {
             String id = kh.getIdKH();
-            if (id.startsWith("KH")) {
+            if (id != null && id.startsWith("KH")) {
                 try {
                     int num = Integer.parseInt(id.substring(2));
                     if (num > maxId) maxId = num;
                 } catch (NumberFormatException e) {
-                    // Bỏ qua nếu format không đúng
                 }
             }
         }
@@ -289,6 +307,8 @@ public class QuanLyKhachHang extends JPanel {
             tableModel.addRow(new Object[]{
                 kh.getIdKH(),
                 kh.getTenKH(),
+                kh.getNgaySinh() != null ? sdf.format(kh.getNgaySinh()) : "",
+                kh.getGioiTinh(),
                 kh.getSdt(),
                 kh.getDiaChi(),
                 df.format(kh.getTongTien()) + " đ",
@@ -304,9 +324,16 @@ public class QuanLyKhachHang extends JPanel {
             KhachHang kh = new KhachHang();
             kh.setIdKH(txtId.getText().trim());
             kh.setTenKH(txtTen.getText().trim());
+            
+            // Chuyển đổi java.util.Date sang java.sql.Date
+            if (dateNgaySinh.getDate() != null) {
+                kh.setNgaySinh(new java.sql.Date(dateNgaySinh.getDate().getTime()));
+            }
+            
+            kh.setGioiTinh(cboGioiTinh.getSelectedItem().toString());
             kh.setSdt(txtSdt.getText().trim());
             kh.setDiaChi(txtDiaChi.getText().trim());
-            kh.setTongTien(0); // Mặc định là 0 khi thêm mới
+            kh.setTongTien(0);
             kh.setStatus(cboStatus.getSelectedItem().toString());
             
             // Kiểm tra SĐT đã tồn tại chưa
@@ -346,11 +373,17 @@ public class QuanLyKhachHang extends JPanel {
             KhachHang kh = new KhachHang();
             kh.setIdKH(txtId.getText().trim());
             kh.setTenKH(txtTen.getText().trim());
+            
+            if (dateNgaySinh.getDate() != null) {
+                kh.setNgaySinh(new java.sql.Date(dateNgaySinh.getDate().getTime()));
+            }
+            
+            kh.setGioiTinh(cboGioiTinh.getSelectedItem().toString());
             kh.setSdt(txtSdt.getText().trim());
             kh.setDiaChi(txtDiaChi.getText().trim());
             
             // Giữ nguyên tổng tiền hiện tại
-            String tongTienStr = txtTongTien.getText().replace(",", "").replace(" đ", "");
+            String tongTienStr = txtTongTien.getText().replace(",", "").replace(" đ", "").trim();
             kh.setTongTien(Float.parseFloat(tongTienStr));
             
             kh.setStatus(cboStatus.getSelectedItem().toString());
@@ -371,15 +404,9 @@ public class QuanLyKhachHang extends JPanel {
         }
     }
     
-    private void traCuuTheoSDT() {
-        traCuuTheoSDT(false); // Gọi với showMessage = false (tìm tự động)
-    }
-
-    // Phương thức tìm kiếm với tùy chọn hiển thị thông báo
     private void traCuuTheoSDT(boolean showMessage) {
         String keyword = txtTimKiem.getText().trim();
         
-        // Nếu không có từ khóa, hiển thị lại toàn bộ dữ liệu
         if (keyword.isEmpty()) {
             loadData();
             return;
@@ -389,28 +416,28 @@ public class QuanLyKhachHang extends JPanel {
         List<KhachHang> allList = khachHangDAO.getAll();
         List<KhachHang> resultList = new ArrayList<>();
         
-        // Chuyển keyword về không dấu, lowercase để so sánh
         String normalizedKeyword = removeAccent(keyword.toLowerCase());
         
         for (KhachHang kh : allList) {
-            // Tìm theo số điện thoại (chính xác)
-            if (kh.getSdt().contains(keyword)) {
+            if (kh.getSdt() != null && kh.getSdt().contains(keyword)) {
                 resultList.add(kh);
                 continue;
             }
             
-            // Tìm theo tên (không phân biệt hoa thường, có dấu/không dấu)
-            String normalizedName = removeAccent(kh.getTenKH().toLowerCase());
-            if (normalizedName.contains(normalizedKeyword)) {
-                resultList.add(kh);
+            if (kh.getTenKH() != null) {
+                String normalizedName = removeAccent(kh.getTenKH().toLowerCase());
+                if (normalizedName.contains(normalizedKeyword)) {
+                    resultList.add(kh);
+                }
             }
         }
         
-        // Hiển thị kết quả
         for (KhachHang kh : resultList) {
             tableModel.addRow(new Object[]{
                 kh.getIdKH(),
                 kh.getTenKH(),
+                kh.getNgaySinh() != null ? sdf.format(kh.getNgaySinh()) : "",
+                kh.getGioiTinh(),
                 kh.getSdt(),
                 kh.getDiaChi(),
                 df.format(kh.getTongTien()) + " đ",
@@ -418,16 +445,16 @@ public class QuanLyKhachHang extends JPanel {
             });
         }
         
-        // CHỈ hiện thông báo khi showMessage = true (nhấn Enter hoặc nút Tìm)
         if (resultList.isEmpty() && showMessage) {
             JOptionPane.showMessageDialog(this, 
                 "Không tìm thấy khách hàng nào khớp với từ khóa: " + keyword, 
                 "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         } else if (resultList.size() == 1) {
-            // Nếu chỉ có 1 kết quả, tự động hiển thị lên form
             KhachHang kh = resultList.get(0);
             txtId.setText(kh.getIdKH());
             txtTen.setText(kh.getTenKH());
+            dateNgaySinh.setDate(kh.getNgaySinh());
+            cboGioiTinh.setSelectedItem(kh.getGioiTinh());
             txtSdt.setText(kh.getSdt());
             txtDiaChi.setText(kh.getDiaChi());
             txtTongTien.setText(String.valueOf((int)kh.getTongTien()));
@@ -436,7 +463,6 @@ public class QuanLyKhachHang extends JPanel {
         }
     }
     
-    // Phương thức bỏ dấu tiếng Việt
     private String removeAccent(String s) {
         String temp = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD);
         java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
@@ -447,19 +473,35 @@ public class QuanLyKhachHang extends JPanel {
     private void hienThiThongTin(int row) {
         txtId.setText(table.getValueAt(row, 0).toString());
         txtTen.setText(table.getValueAt(row, 1).toString());
-        txtSdt.setText(table.getValueAt(row, 2).toString());
-        txtDiaChi.setText(table.getValueAt(row, 3).toString());
         
-        String tongTien = table.getValueAt(row, 4).toString();
-        tongTien = tongTien.replace(",", "").replace(" đ", "");
+        // Ngày sinh
+        String ngaySinhStr = table.getValueAt(row, 2).toString();
+        if (!ngaySinhStr.isEmpty()) {
+            try {
+                dateNgaySinh.setDate(sdf.parse(ngaySinhStr));
+            } catch (Exception e) {
+                dateNgaySinh.setDate(null);
+            }
+        } else {
+            dateNgaySinh.setDate(null);
+        }
+        
+        cboGioiTinh.setSelectedItem(table.getValueAt(row, 3).toString());
+        txtSdt.setText(table.getValueAt(row, 4).toString());
+        txtDiaChi.setText(table.getValueAt(row, 5).toString());
+        
+        String tongTien = table.getValueAt(row, 6).toString();
+        tongTien = tongTien.replace(",", "").replace(" đ", "").trim();
         txtTongTien.setText(tongTien);
         
-        cboStatus.setSelectedItem(table.getValueAt(row, 5).toString());
+        cboStatus.setSelectedItem(table.getValueAt(row, 7).toString());
     }
     
     private void lamMoi() {
         generateNextId();
         txtTen.setText("");
+        dateNgaySinh.setDate(null);
+        cboGioiTinh.setSelectedIndex(0);
         txtSdt.setText("");
         txtDiaChi.setText("");
         txtTongTien.setText("0");
@@ -491,7 +533,6 @@ public class QuanLyKhachHang extends JPanel {
             return false;
         }
         
-        // Kiểm tra format số điện thoại (10 số)
         String sdt = txtSdt.getText().trim();
         if (!sdt.matches("\\d{10}")) {
             JOptionPane.showMessageDialog(this, 

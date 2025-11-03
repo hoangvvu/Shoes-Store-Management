@@ -11,7 +11,8 @@ public class DAO_KhachHang {
     // Lấy tất cả khách hàng
     public List<KhachHang> getAll() {
         List<KhachHang> list = new ArrayList<>();
-        String sql = "SELECT * FROM KHACHHANG";
+        // Cập nhật câu SQL để lấy đủ các cột mới
+        String sql = "SELECT idKH, tenKH, ngaySinh, gioiTinh, sdt, diaChi, tongTien, status FROM KHACHHANG";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -21,6 +22,8 @@ public class DAO_KhachHang {
             	KhachHang kh = new KhachHang();
                 kh.setIdKH(rs.getString("idKH"));
                 kh.setTenKH(rs.getString("tenKH"));
+                kh.setNgaySinh(rs.getDate("ngaySinh")); // Lấy ngày sinh
+                kh.setGioiTinh(rs.getString("gioiTinh")); // Lấy giới tính
                 kh.setSdt(rs.getString("sdt"));
                 kh.setDiaChi(rs.getString("diaChi"));
                 kh.setTongTien(rs.getFloat("tongTien"));
@@ -35,7 +38,7 @@ public class DAO_KhachHang {
     
     // Lấy theo ID
     public KhachHang getById(String id) {
-        String sql = "SELECT * FROM KHACHHANG WHERE idKH = ?";
+        String sql = "SELECT idKH, tenKH, ngaySinh, gioiTinh, sdt, diaChi, tongTien, status FROM KHACHHANG WHERE idKH = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -47,6 +50,8 @@ public class DAO_KhachHang {
             	KhachHang kh = new KhachHang();
                 kh.setIdKH(rs.getString("idKH"));
                 kh.setTenKH(rs.getString("tenKH"));
+                kh.setNgaySinh(rs.getDate("ngaySinh"));
+                kh.setGioiTinh(rs.getString("gioiTinh"));
                 kh.setSdt(rs.getString("sdt"));
                 kh.setDiaChi(rs.getString("diaChi"));
                 kh.setTongTien(rs.getFloat("tongTien"));
@@ -61,17 +66,20 @@ public class DAO_KhachHang {
     
     // Thêm mới
     public boolean insert(KhachHang kh) {
-        String sql = "INSERT INTO KHACHHANG (idKH, tenKH, sdt, diaChi, tongTien, status) VALUES (?, ?, ?, ?, ?, ?)";
+        // Cập nhật câu SQL để thêm 2 cột mới
+        String sql = "INSERT INTO KHACHHANG (idKH, tenKH, ngaySinh, gioiTinh, sdt, diaChi, tongTien, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setString(1, kh.getIdKH());
             ps.setString(2, kh.getTenKH());
-            ps.setString(3, kh.getSdt());
-            ps.setString(4, kh.getDiaChi());
-            ps.setFloat(5, kh.getTongTien());
-            ps.setString(6, kh.getStatus());
+            ps.setDate(3, kh.getNgaySinh()); // Set ngày sinh
+            ps.setString(4, kh.getGioiTinh()); // Set giới tính
+            ps.setString(5, kh.getSdt());
+            ps.setString(6, kh.getDiaChi());
+            ps.setFloat(7, kh.getTongTien());
+            ps.setString(8, kh.getStatus());
             
             int rows = ps.executeUpdate();
             return rows > 0;
@@ -83,17 +91,20 @@ public class DAO_KhachHang {
     
     // Cập nhật
     public boolean update(KhachHang kh) {
-        String sql = "UPDATE KHACHHANG SET tenKH = ?, sdt = ?, diaChi = ?, tongTien = ?, status = ? WHERE idKH = ?";
+        // Cập nhật câu SQL để cập nhật 2 cột mới
+        String sql = "UPDATE KHACHHANG SET tenKH = ?, ngaySinh = ?, gioiTinh = ?, sdt = ?, diaChi = ?, tongTien = ?, status = ? WHERE idKH = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setString(1, kh.getTenKH());
-            ps.setString(2, kh.getSdt());
-            ps.setString(3, kh.getDiaChi());
-            ps.setFloat(4, kh.getTongTien());
-            ps.setString(5, kh.getStatus());
-            ps.setString(6, kh.getIdKH());
+            ps.setDate(2, kh.getNgaySinh()); // Set ngày sinh
+            ps.setString(3, kh.getGioiTinh()); // Set giới tính
+            ps.setString(4, kh.getSdt());
+            ps.setString(5, kh.getDiaChi());
+            ps.setFloat(6, kh.getTongTien());
+            ps.setString(7, kh.getStatus());
+            ps.setString(8, kh.getIdKH());
             
             int rows = ps.executeUpdate();
             return rows > 0;
@@ -103,7 +114,9 @@ public class DAO_KhachHang {
         }
     }
     
-    // Xóa
+    // Các phương thức delete, updateTongTien, searchByName, getBySDT được giữ nguyên về logic
+    // nhưng cần được cập nhật SQL SELECT đầy đủ nếu bạn cần trả về object KhachHang đầy đủ
+
     public boolean delete(String id) {
         String sql = "DELETE FROM KHACHHANG WHERE idKH = ?";
         
@@ -119,10 +132,9 @@ public class DAO_KhachHang {
         }
     }
     
-    // Tìm kiếm theo tên
     public List<KhachHang> searchByName(String name) {
         List<KhachHang> list = new ArrayList<>();
-        String sql = "SELECT * FROM KHACHHANG WHERE tenKH LIKE ?";
+        String sql = "SELECT idKH, tenKH, ngaySinh, gioiTinh, sdt, diaChi, tongTien, status FROM KHACHHANG WHERE tenKH LIKE ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -134,6 +146,8 @@ public class DAO_KhachHang {
             	KhachHang kh = new KhachHang();
                 kh.setIdKH(rs.getString("idKH"));
                 kh.setTenKH(rs.getString("tenKH"));
+                kh.setNgaySinh(rs.getDate("ngaySinh"));
+                kh.setGioiTinh(rs.getString("gioiTinh"));
                 kh.setSdt(rs.getString("sdt"));
                 kh.setDiaChi(rs.getString("diaChi"));
                 kh.setTongTien(rs.getFloat("tongTien"));
@@ -146,9 +160,8 @@ public class DAO_KhachHang {
         return list;
     }
     
-    // Tìm kiếm theo số điện thoại
     public KhachHang getBySDT(String sdt) {
-        String sql = "SELECT * FROM KHACHHANG WHERE sdt = ?";
+        String sql = "SELECT idKH, tenKH, ngaySinh, gioiTinh, sdt, diaChi, tongTien, status FROM KHACHHANG WHERE sdt = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -160,6 +173,8 @@ public class DAO_KhachHang {
             	KhachHang kh = new KhachHang();
                 kh.setIdKH(rs.getString("idKH"));
                 kh.setTenKH(rs.getString("tenKH"));
+                kh.setNgaySinh(rs.getDate("ngaySinh"));
+                kh.setGioiTinh(rs.getString("gioiTinh"));
                 kh.setSdt(rs.getString("sdt"));
                 kh.setDiaChi(rs.getString("diaChi"));
                 kh.setTongTien(rs.getFloat("tongTien"));
@@ -172,7 +187,6 @@ public class DAO_KhachHang {
         return null;
     }
     
-    // Cập nhật tổng tiền
     public boolean updateTongTien(String idKH, float tongTien) {
         String sql = "UPDATE KHACHHANG SET tongTien = tongTien + ? WHERE idKH = ?";
         

@@ -40,7 +40,7 @@ public class MAINFRAME extends JFrame {
         contentPanel.add(new QuanLyGiay(), "giay");
         contentPanel.add(new QuanLyHoaDon(currentUser), "hoadon");
         contentPanel.add(new QuanLyNhapKho(currentUser), "nhapkho");
-        contentPanel.add(new QuanLyThongKe(), "thongke"); // ✅ THÊM MỚI
+        contentPanel.add(new QuanLyThongKe(), "thongke");
 
         showMainMenuPanel();
     }
