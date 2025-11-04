@@ -71,7 +71,7 @@ public class QuanLyHoaDon extends JPanel {
         JButton btnBack = new JButton("← Quay lại");
         btnBack.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btnBack.setBackground(new Color(52, 152, 219));
-        btnBack.setForeground(Color.RED);
+        btnBack.setForeground(Color.WHITE);
         btnBack.setFocusPainted(false);
         btnBack.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         btnBack.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -171,7 +171,7 @@ public class QuanLyHoaDon extends JPanel {
         
         // Mã HĐ
         gbc.gridx = 0; gbc.gridy = 0;
-        panel.add(new JLabel("Mã HĐ:"), gbc);
+        panel.add(new JLabel("Mã hóa đơn:"), gbc);
         txtIdHD = new JTextField(10);
         txtIdHD.setEditable(false);
         txtIdHD.setBackground(new Color(240, 240, 240));
@@ -180,7 +180,7 @@ public class QuanLyHoaDon extends JPanel {
         
         // Mã NV
         gbc.gridx = 0; gbc.gridy = 1;
-        panel.add(new JLabel("Mã NV:"), gbc);
+        panel.add(new JLabel("Mã nhân viên:"), gbc);
         txtIdNV = new JTextField(10);
         txtIdNV.setEditable(false);
         txtIdNV.setBackground(new Color(240, 240, 240));
@@ -373,7 +373,7 @@ public class QuanLyHoaDon extends JPanel {
         panel.add(headerPanel, BorderLayout.NORTH);
         
         // Bảng
-        String[] columns = {"Mã HĐ", "Mã NV", "Mã KH", "Ngày lập", "Tổng tiền", "Trạng thái"};
+        String[] columns = {"Mã hóa đơn", "Mã nhân viên", "Mã khách hàng", "Ngày lập", "Tổng tiền", "Trạng thái"};
         modelHoaDon = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -386,7 +386,7 @@ public class QuanLyHoaDon extends JPanel {
         tableHoaDon.setRowHeight(30);
         tableHoaDon.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
         tableHoaDon.getTableHeader().setBackground(new Color(52, 73, 94));
-        tableHoaDon.getTableHeader().setForeground(Color.BLACK);
+        tableHoaDon.getTableHeader().setForeground(Color.WHITE);
         
         tableHoaDon.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
@@ -685,7 +685,7 @@ public class QuanLyHoaDon extends JPanel {
                 khachHangDAO.updateTongTien(txtIdKH.getText(), tongTienHD);
                 
                 JOptionPane.showMessageDialog(this, 
-                    "Lưu hóa đơn thành công!\nMã HĐ: " + currentHoaDonId + 
+                    "Lưu hóa đơn thành công!\nMã hóa đơn: " + currentHoaDonId + 
                     "\nTổng tiền: " + df.format(tongTienHD) + " đ" +
                     "\nTrạng thái: Chờ thanh toán",
                     "Thành công", JOptionPane.INFORMATION_MESSAGE);

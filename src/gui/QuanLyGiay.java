@@ -13,6 +13,7 @@ import DAO.DAO_HangGiay;
 import model.Giay;
 import model.LoaiGiay;
 import model.HangGiay;
+import model.ChiTietPhanQuyen; 
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,12 +31,11 @@ public class QuanLyGiay extends JPanel {
     private DAO.DAO_HangGiay hangGiayDAO;
     private DecimalFormat df = new DecimalFormat("#,###");
     private String selectedImagePath = "";
-    
-    // Khai báo lại Map để hỗ trợ việc hiển thị chỉ tên
-    private Map<String, String> loaiGiayMap = new HashMap<>(); // ID -> Tên
-    private Map<String, String> loaiGiayIdMap = new HashMap<>(); // Tên -> ID (MỚI)
-    private Map<String, String> hangGiayMap = new HashMap<>(); // ID -> Tên
-    private Map<String, String> hangGiayIdMap = new HashMap<>(); // Tên -> ID
+    private Map<String, String> loaiGiayMap = new HashMap<>();
+    private Map<String, String> loaiGiayIdMap = new HashMap<>();
+    private Map<String, String> hangGiayMap = new HashMap<>(); 
+    private Map<String, String> hangGiayIdMap = new HashMap<>(); 
+    private ChiTietPhanQuyen permission;
     
     public QuanLyGiay() {
         giayDAO = new DAO_Giay();
@@ -64,6 +64,23 @@ public class QuanLyGiay extends JPanel {
             );
    }
     
+    public QuanLyGiay(ChiTietPhanQuyen permission) {
+        this(); // Gọi constructor gốc để khởi tạo giao diện
+        this.permission = permission;
+        applyPermissions(); // Áp dụng quyền
+    }
+    
+    private void applyPermissions() {
+        if (permission != null) {
+            btnThem.setEnabled(permission.isDuocThem());
+            btnSua.setEnabled(permission.isDuocSua());
+        } else {
+            // Nếu không có quyền (lỗi), vô hiệu hóa hết
+            btnThem.setEnabled(false);
+            btnSua.setEnabled(false);
+        }
+    }
+    
     // --- Các phương thức createXXXPanel() và createStyledButton() giữ nguyên ---
     private JPanel createTitlePanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -75,7 +92,7 @@ public class QuanLyGiay extends JPanel {
         JButton btnBack = new JButton("← Quay lại");
         btnBack.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btnBack.setBackground(new Color(52, 152, 219));
-        btnBack.setForeground(Color.RED);
+        btnBack.setForeground(Color.WHITE);
         btnBack.setFocusPainted(false);
         btnBack.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         btnBack.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -299,7 +316,7 @@ public class QuanLyGiay extends JPanel {
         table.setRowHeight(80); 
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
         table.getTableHeader().setBackground(new Color(52, 73, 94));
-        table.getTableHeader().setForeground(Color.BLACK);
+        table.getTableHeader().setForeground(Color.WHITE);
         table.getTableHeader().setReorderingAllowed(false);
         table.setGridColor(new Color(189, 195, 199));
         table.setShowGrid(true);
@@ -752,8 +769,10 @@ public class QuanLyGiay extends JPanel {
             }
         }
         
-        // <<< YÊU CẦU 2: Khi click vào sản phẩm (để sửa), vô hiệu hóa nút "Thêm"
         btnThem.setEnabled(false);
+        if (permission != null) {
+            btnSua.setEnabled(permission.isDuocSua());
+        }
     }
     
     private void lamMoi() {
@@ -774,8 +793,7 @@ public class QuanLyGiay extends JPanel {
         lblHinhAnh.setIcon(null);
         lblHinhAnh.setText("Chưa có hình ảnh");
         
-        // <<< YÊU CẦU 2 (Reset): Khi làm mới, kích hoạt lại nút "Thêm"
-        btnThem.setEnabled(true);
+        applyPermissions();
         
         txtTen.requestFocus();
         loadData();

@@ -69,7 +69,7 @@ public class QuanLyNhapKho extends JPanel {
         JButton btnBack = new JButton("← Quay lại");
         btnBack.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btnBack.setBackground(new Color(52, 152, 219));
-        btnBack.setForeground(Color.RED);
+        btnBack.setForeground(Color.WHITE);
         btnBack.setFocusPainted(false);
         btnBack.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         btnBack.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -171,7 +171,7 @@ public class QuanLyNhapKho extends JPanel {
         panel.add(txtIdNK, gbc);
         
         gbc.gridx = 0; gbc.gridy = 1;
-        panel.add(new JLabel("Mã NV:"), gbc);
+        panel.add(new JLabel("Mã nhân viên:"), gbc);
         txtIdNV = new JTextField(10);
         txtIdNV.setEditable(false);
         txtIdNV.setBackground(new Color(240, 240, 240));
@@ -179,7 +179,7 @@ public class QuanLyNhapKho extends JPanel {
         panel.add(txtIdNV, gbc);
         
         gbc.gridx = 0; gbc.gridy = 2;
-        panel.add(new JLabel("Mã NCC:"), gbc);
+        panel.add(new JLabel("Mã nhà cung cấp:"), gbc);
         
         JPanel nccPanel = new JPanel(new BorderLayout(5, 0));
         nccPanel.setBackground(Color.WHITE);
@@ -354,7 +354,7 @@ public class QuanLyNhapKho extends JPanel {
         headerPanel.add(searchPanel, BorderLayout.EAST);
         panel.add(headerPanel, BorderLayout.NORTH);
         
-        String[] columns = {"Mã phiếu", "Mã NV", "Mã NCC", "Ngày nhập", "Tổng tiền", "Trạng thái"};
+        String[] columns = {"Mã phiếu", "Mã nhân viên", "Mã nhà cung cấp", "Ngày nhập", "Tổng tiền", "Trạng thái"};
         modelNhapKho = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -367,7 +367,7 @@ public class QuanLyNhapKho extends JPanel {
         tableNhapKho.setRowHeight(30);
         tableNhapKho.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
         tableNhapKho.getTableHeader().setBackground(new Color(52, 73, 94));
-        tableNhapKho.getTableHeader().setForeground(Color.BLACK);
+        tableNhapKho.getTableHeader().setForeground(Color.WHITE);
         
         tableNhapKho.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {

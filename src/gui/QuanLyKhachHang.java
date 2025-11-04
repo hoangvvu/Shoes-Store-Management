@@ -8,6 +8,7 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import DAO.DAO_KhachHang;
 import model.KhachHang;
+import model.ChiTietPhanQuyen; 
 import java.util.List;
 import java.util.ArrayList;
 import com.toedter.calendar.JDateChooser;
@@ -22,6 +23,7 @@ public class QuanLyKhachHang extends JPanel {
     private DAO_KhachHang khachHangDAO;
     private DecimalFormat df = new DecimalFormat("#,###");
     private SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+    private ChiTietPhanQuyen permission;
     
     public QuanLyKhachHang() {
         khachHangDAO = new DAO_KhachHang();
@@ -36,6 +38,23 @@ public class QuanLyKhachHang extends JPanel {
         
         loadData();
         generateNextId();
+    }
+    
+    public QuanLyKhachHang(ChiTietPhanQuyen permission) {
+        this(); // Gọi constructor gốc để khởi tạo giao diện
+        this.permission = permission;
+        applyPermissions(); // Áp dụng quyền
+    }
+    
+    private void applyPermissions() {
+        if (permission != null) {
+            btnThem.setEnabled(permission.isDuocThem());
+            btnSua.setEnabled(permission.isDuocSua());
+        } else {
+            // Nếu không có quyền (lỗi), vô hiệu hóa hết
+            btnThem.setEnabled(false);
+            btnSua.setEnabled(false);
+        }
     }
     
     private JPanel createTitlePanel() {
@@ -258,7 +277,7 @@ public class QuanLyKhachHang extends JPanel {
         table.setRowHeight(30);
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
         table.getTableHeader().setBackground(new Color(52, 73, 94));
-        table.getTableHeader().setForeground(Color.BLACK);
+        table.getTableHeader().setForeground(Color.WHITE);
         table.getTableHeader().setReorderingAllowed(false);
         table.setGridColor(new Color(189, 195, 199));
         table.setShowGrid(true);
@@ -495,6 +514,11 @@ public class QuanLyKhachHang extends JPanel {
         txtTongTien.setText(tongTien);
         
         cboStatus.setSelectedItem(table.getValueAt(row, 7).toString());
+        
+        btnThem.setEnabled(false);
+        if (permission != null) {
+            btnSua.setEnabled(permission.isDuocSua());
+        }
     }
     
     private void lamMoi() {
@@ -510,6 +534,8 @@ public class QuanLyKhachHang extends JPanel {
         table.clearSelection();
         txtTen.requestFocus();
         loadData();
+        
+        applyPermissions();
     }
     
     private boolean validateInput() {

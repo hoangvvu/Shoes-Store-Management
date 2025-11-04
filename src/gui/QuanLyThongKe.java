@@ -107,7 +107,7 @@ public class QuanLyThongKe extends JPanel {
         JButton btnBack = new JButton("← Quay lại");
         btnBack.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btnBack.setBackground(new Color(52, 152, 219));
-        btnBack.setForeground(Color.RED);
+        btnBack.setForeground(Color.WHITE);
         btnBack.setFocusPainted(false);
         btnBack.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         btnBack.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));

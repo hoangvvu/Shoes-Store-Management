@@ -4,19 +4,56 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import model.NhanVien;
+import model.ChiTietPhanQuyen; // Import model quyền
+import java.util.List; // Import List
+import java.util.HashMap; // Import HashMap
+import java.util.Map; // Import Map
 
 public class MAINFRAME extends JFrame {
     private NhanVien currentUser;
+    private List<ChiTietPhanQuyen> permissions; // Lưu danh sách quyền
+    private Map<String, ChiTietPhanQuyen> permissionMap; // Map để truy cập quyền nhanh
+
     private JPanel mainMenuPanel;
     private JPanel contentPanel;
     private CardLayout cardLayout;
     private JLabel lblWelcome;
     private JMenuBar menuBar;
+    
+    // Hằng số cho mã chức năng
+    private static final String CN_NHANVIEN = "CN001";
+    private static final String CN_GIAY = "CN002";
+    private static final String CN_HOADON = "CN003";
+    private static final String CN_KHO = "CN004";
+    private static final String CN_KHACHHANG = "CN005";
+    private static final String CN_THONGKE = "CN006";
 
-    public MAINFRAME(NhanVien user) {
+    // Constructor
+    public MAINFRAME(NhanVien user, List<ChiTietPhanQuyen> permissions) {
         this.currentUser = user;
+        this.permissions = permissions;
+        
+        // Build Map để tra cứu quyền nhanh
+        this.permissionMap = new HashMap<>();
+        if (permissions != null) {
+            for (ChiTietPhanQuyen ct : permissions) {
+                this.permissionMap.put(ct.getIdCN(), ct);
+            }
+        }
+        
         initComponents();
         setLocationRelativeTo(null);
+    }
+
+    // Hàm helper tra cứu quyền
+    private ChiTietPhanQuyen getPermission(String functionId) {
+        return this.permissionMap.get(functionId);
+    }
+    
+    // Hàm helper kiểm tra quyền xem
+    private boolean canView(String functionId) {
+        ChiTietPhanQuyen p = getPermission(functionId);
+        return (p != null && p.isDuocXem());
     }
 
     private void initComponents() {
@@ -29,18 +66,24 @@ public class MAINFRAME extends JFrame {
         contentPanel = new JPanel(cardLayout);
         add(contentPanel, BorderLayout.CENTER);
 
-        createMenuBar();
-
-        mainMenuPanel = createMainMenuPanel();
+        createMenuBar(); // Cập nhật: Sẽ hiển thị tất cả
+        
+        mainMenuPanel = createMainMenuPanel(); // Cập nhật: Sẽ hiển thị tất cả
         contentPanel.add(mainMenuPanel, "menu");
 
-        // Thêm các panel quản lý - TRUYỀN currentUser nếu cần
-        contentPanel.add(new QuanLyNhanVien(), "nhanvien");
-        contentPanel.add(new QuanLyKhachHang(), "khachhang");
-        contentPanel.add(new QuanLyGiay(), "giay");
+        // === THAY ĐỔI LOGIC: Thêm tất cả các panel vào CardLayout ===
+        // Các panel này đã được lập trình để xử lý (permission == null)
+        // một cách an toàn bằng cách vô hiệu hóa các nút.
+        
+        boolean isAdmin = "PQ001".equalsIgnoreCase(currentUser.getIdPQ());
+
+        contentPanel.add(new QuanLyNhanVien(getPermission(CN_NHANVIEN), isAdmin), "nhanvien");
+        contentPanel.add(new QuanLyKhachHang(getPermission(CN_KHACHHANG)), "khachhang");
+        contentPanel.add(new QuanLyGiay(getPermission(CN_GIAY)), "giay");
         contentPanel.add(new QuanLyHoaDon(currentUser), "hoadon");
         contentPanel.add(new QuanLyNhapKho(currentUser), "nhapkho");
-        contentPanel.add(new QuanLyThongKe(), "thongke");
+        contentPanel.add(new QuanLyThongKe(currentUser), "thongke");
+        // ===================================
 
         showMainMenuPanel();
     }
@@ -49,25 +92,20 @@ public class MAINFRAME extends JFrame {
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBackground(new Color(236, 240, 241));
 
-        // Header
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(new Color(52, 73, 94));
         headerPanel.setPreferredSize(new Dimension(0, 60));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-
         JLabel lblTitle = new JLabel("HỆ THỐNG QUẢN LÝ CỬA HÀNG GIÀY");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
         lblTitle.setForeground(Color.WHITE);
         headerPanel.add(lblTitle, BorderLayout.WEST);
-
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
         rightPanel.setBackground(new Color(52, 73, 94));
-
         lblWelcome = new JLabel("Xin chào: " + currentUser.getTenNV() +
                 " (" + currentUser.getPhanQuyen() + ")");
         lblWelcome.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         lblWelcome.setForeground(Color.WHITE);
-
         JButton btnLogout = new JButton("Đăng Xuất");
         btnLogout.setFocusPainted(false);
         btnLogout.setBackground(Color.WHITE);
@@ -76,13 +114,13 @@ public class MAINFRAME extends JFrame {
         btnLogout.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         btnLogout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnLogout.addActionListener(e -> handleLogout());
-
         rightPanel.add(lblWelcome);
         rightPanel.add(btnLogout);
         headerPanel.add(rightPanel, BorderLayout.EAST);
         mainPanel.add(headerPanel, BorderLayout.NORTH);
 
-        // Center
+
+        // === THAY ĐỔI LOGIC: Hiển thị tất cả 6 nút dashboard ===
         JPanel centerPanel = new JPanel(new GridLayout(2, 3, 20, 20));
         centerPanel.setBackground(new Color(236, 240, 241));
         centerPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
@@ -92,7 +130,7 @@ public class MAINFRAME extends JFrame {
         centerPanel.add(createDashboardCard("Quản Lý Giày", new Color(155, 89, 182), "giay"));
         centerPanel.add(createDashboardCard("Quản Lý Hóa Đơn", new Color(230, 126, 34), "hoadon"));
         centerPanel.add(createDashboardCard("Quản Lý Nhập Kho", new Color(231, 76, 60), "nhapkho"));
-        centerPanel.add(createDashboardCard("Thống Kê Báo Cáo", new Color(26, 188, 156), "thongke")); // ✅ SỬA LẠI
+        centerPanel.add(createDashboardCard("Thống Kê Báo Cáo", new Color(26, 188, 156), "thongke"));
 
         mainPanel.add(centerPanel, BorderLayout.CENTER);
 
@@ -100,18 +138,17 @@ public class MAINFRAME extends JFrame {
         JPanel footerPanel = new JPanel();
         footerPanel.setBackground(new Color(52, 73, 94));
         footerPanel.setPreferredSize(new Dimension(0, 30));
-
         JLabel lblFooter = new JLabel("© 2024 Shoe Store Management System - Version 1.0");
         lblFooter.setForeground(Color.WHITE);
         lblFooter.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         footerPanel.add(lblFooter);
-
         mainPanel.add(footerPanel, BorderLayout.SOUTH);
 
         return mainPanel;
     }
 
     private JPanel createDashboardCard(String title, Color color, String action) {
+        // ... (Giữ nguyên hàm này, logic click đã được chuyển vào hàm show...Panel()) ...
         JPanel card = new JPanel(new BorderLayout());
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
@@ -131,12 +168,10 @@ public class MAINFRAME extends JFrame {
             public void mouseEntered(MouseEvent e) {
                 card.setBackground(new Color(245, 245, 245));
             }
-
             @Override
             public void mouseExited(MouseEvent e) {
                 card.setBackground(Color.WHITE);
             }
-
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (action != null) {
@@ -151,7 +186,7 @@ public class MAINFRAME extends JFrame {
                             showQuanLyHoaDonPanel(); break;
                         case "nhapkho":
                             showQuanLyNhapKhoPanel(); break;
-                        case "thongke": // ✅ THÊM MỚI
+                        case "thongke":
                             showQuanLyThongKePanel(); break;
                         default:
                             showNotImplemented(title); break;
@@ -166,23 +201,22 @@ public class MAINFRAME extends JFrame {
         menuBar = new JMenuBar();
         menuBar.setBackground(new Color(44, 62, 80));
 
+        // === MENU HỆ THỐNG (Giữ nguyên) ===
         JMenu menuSystem = new JMenu("Hệ Thống");
         menuSystem.setForeground(Color.WHITE);
         menuSystem.setFont(new Font("Segoe UI", Font.BOLD, 14));
-
         JMenuItem itemHome = new JMenuItem("Trang Chủ");
         JMenuItem itemLogout = new JMenuItem("Đăng Xuất");
         JMenuItem itemExit = new JMenuItem("Thoát");
-
         itemHome.addActionListener(e -> showMainMenuPanel());
         itemLogout.addActionListener(e -> handleLogout());
         itemExit.addActionListener(e -> handleExit());
-
         menuSystem.add(itemHome);
         menuSystem.addSeparator();
         menuSystem.add(itemLogout);
         menuSystem.add(itemExit);
 
+        // === MENU QUẢN LÝ (THAY ĐỔI: Hiển thị tất cả) ===
         JMenu menuManagement = new JMenu("Quản Lý");
         menuManagement.setForeground(Color.WHITE);
         menuManagement.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -192,15 +226,16 @@ public class MAINFRAME extends JFrame {
         JMenuItem itemGiay = new JMenuItem("Quản Lý Giày");
         JMenuItem itemHoaDon = new JMenuItem("Quản Lý Hóa Đơn");
         JMenuItem itemNhapKho = new JMenuItem("Quản Lý Nhập Kho");
-        JMenuItem itemThongKe = new JMenuItem("Thống Kê Báo Cáo"); // ✅ THÊM MỚI
+        JMenuItem itemThongKe = new JMenuItem("Thống Kê Báo Cáo");
 
         itemNhanVien.addActionListener(e -> showQuanLyNhanVienPanel());
         itemKhachHang.addActionListener(e -> showQuanLyKhachHangPanel());
         itemGiay.addActionListener(e -> showQuanLyGiayPanel());
         itemHoaDon.addActionListener(e -> showQuanLyHoaDonPanel());
         itemNhapKho.addActionListener(e -> showQuanLyNhapKhoPanel());
-        itemThongKe.addActionListener(e -> showQuanLyThongKePanel()); // ✅ CẬP NHẬT
+        itemThongKe.addActionListener(e -> showQuanLyThongKePanel());
 
+        // Thêm tất cả vào menu
         menuManagement.add(itemNhanVien);
         menuManagement.add(itemKhachHang);
         menuManagement.add(itemGiay);
@@ -209,11 +244,11 @@ public class MAINFRAME extends JFrame {
         menuManagement.add(itemThongKe);
 
         menuBar.add(menuSystem);
-        menuBar.add(menuManagement);
+        menuBar.add(menuManagement); // Thêm menu quản lý (vì nó luôn có mục con)
 
-        setJMenuBar(menuBar);
     }
 
+    // ... (Giữ nguyên các hàm handleLogout, handleExit, showNotImplemented) ...
     private void handleLogout() {
         int choice = JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc chắn muốn đăng xuất?",
@@ -221,10 +256,14 @@ public class MAINFRAME extends JFrame {
                 JOptionPane.YES_NO_OPTION);
         if (choice == JOptionPane.YES_OPTION) {
             this.dispose();
-            new LoginForm().setVisible(true);
+            try {
+                new LoginForm().setVisible(true);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Lỗi khi mở lại form Đăng nhập: " + ex.getMessage());
+            }
         }
     }
-
     private void handleExit() {
         int choice = JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc chắn muốn thoát chương trình?",
@@ -232,19 +271,70 @@ public class MAINFRAME extends JFrame {
                 JOptionPane.YES_NO_OPTION);
         if (choice == JOptionPane.YES_OPTION) System.exit(0);
     }
-
     private void showNotImplemented(String featureName) {
         JOptionPane.showMessageDialog(this,
                 "Chức năng " + featureName + " đang được phát triển!",
                 "Thông báo",
                 JOptionPane.INFORMATION_MESSAGE);
     }
+    
+    // === THÊM HÀM MỚI: Hiển thị cảnh báo ===
+    private void showAccessDeniedWarning(String featureName) {
+        JOptionPane.showMessageDialog(this,
+                "Bạn không có quyền truy cập chức năng: " + featureName,
+                "Lỗi Phân Quyền",
+                JOptionPane.WARNING_MESSAGE);
+    }
 
+    // === CẬP NHẬT: Logic kiểm tra quyền được chuyển vào đây ===
+    
     public void showMainMenuPanel() { cardLayout.show(contentPanel, "menu"); }
-    public void showQuanLyNhanVienPanel() { cardLayout.show(contentPanel, "nhanvien"); }
-    public void showQuanLyKhachHangPanel() { cardLayout.show(contentPanel, "khachhang"); }
-    public void showQuanLyGiayPanel() { cardLayout.show(contentPanel, "giay"); }
-    public void showQuanLyHoaDonPanel() { cardLayout.show(contentPanel, "hoadon"); }
-    public void showQuanLyNhapKhoPanel() { cardLayout.show(contentPanel, "nhapkho"); }
-    public void showQuanLyThongKePanel() { cardLayout.show(contentPanel, "thongke"); } // ✅ THÊM MỚI
+    
+    public void showQuanLyNhanVienPanel() { 
+        if (canView(CN_NHANVIEN)) {
+            cardLayout.show(contentPanel, "nhanvien");
+        } else {
+            showAccessDeniedWarning("Quản Lý Nhân Viên");
+        }
+    }
+    
+    public void showQuanLyKhachHangPanel() { 
+        if (canView(CN_KHACHHANG)) {
+            cardLayout.show(contentPanel, "khachhang");
+        } else {
+            showAccessDeniedWarning("Quản Lý Khách Hàng");
+        }
+    }
+    
+    public void showQuanLyGiayPanel() { 
+        if (canView(CN_GIAY)) {
+            cardLayout.show(contentPanel, "giay");
+        } else {
+            showAccessDeniedWarning("Quản Lý Giày");
+        }
+    }
+    
+    public void showQuanLyHoaDonPanel() { 
+        if (canView(CN_HOADON)) {
+            cardLayout.show(contentPanel, "hoadon");
+        } else {
+            showAccessDeniedWarning("Quản Lý Hóa Đơn");
+        }
+    }
+    
+    public void showQuanLyNhapKhoPanel() { 
+        if (canView(CN_KHO)) {
+            cardLayout.show(contentPanel, "nhapkho");
+        } else {
+            showAccessDeniedWarning("Quản Lý Nhập Kho");
+        }
+    }
+    
+    public void showQuanLyThongKePanel() { 
+        if (canView(CN_THONGKE)) {
+            cardLayout.show(contentPanel, "thongke");
+        } else {
+            showAccessDeniedWarning("Thống Kê Báo Cáo");
+        }
+    }
 }

@@ -10,11 +10,11 @@ import java.util.Date;
 import DAO.DAO_NhanVien;
 import DAO.DAO_PhanQuyen;
 import DAO.DAO_ChiTietPhanQuyen;
-import DAO.DAO_ChucNang; // Import DAO mới
+import DAO.DAO_ChucNang;
 import model.ChiTietPhanQuyen;
 import model.NhanVien;
 import model.PhanQuyen;
-import model.ChucNang; // Import model mới
+import model.ChucNang;
 import java.util.List;
 import java.util.ArrayList;
 import com.toedter.calendar.JDateChooser;
@@ -35,6 +35,9 @@ public class QuanLyNhanVien extends JPanel {
     private DAO_PhanQuyen phanQuyenDAO;
     private DAO_ChucNang daoChucNang; // DAO mới
     private SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+    
+    private ChiTietPhanQuyen permission;
+    private boolean isAdmin;
     
     // Map màu (chỉ để cho đẹp)
     private Map<String, Color> colorMap = new HashMap<>();
@@ -65,6 +68,30 @@ public class QuanLyNhanVien extends JPanel {
         generateNewEmployeeId();
     }
     
+    public QuanLyNhanVien(ChiTietPhanQuyen permission, boolean isAdmin) {
+        this();
+        this.permission = permission;
+        this.isAdmin = isAdmin;
+        applyPermissions();
+    }
+    
+    private void applyPermissions() {
+        if (permission != null) {
+            btnThem.setEnabled(permission.isDuocThem());
+            btnSua.setEnabled(permission.isDuocSua());
+            // Liên kết quyền đổi MK với quyền Sửa
+            btnDoiMatKhau.setEnabled(permission.isDuocSua()); 
+        } else {
+            // Nếu không có quyền (lỗi), vô hiệu hóa hết
+            btnThem.setEnabled(false);
+            btnSua.setEnabled(false);
+            btnDoiMatKhau.setEnabled(false);
+        }
+        
+        // Áp dụng quy tắc đặc biệt: Chỉ Admin được quản lý phân quyền
+        btnQuanLyPQ.setEnabled(this.isAdmin);
+    }
+    
     private JPanel createTitlePanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(new Color(236, 240, 241));
@@ -77,7 +104,7 @@ public class QuanLyNhanVien extends JPanel {
         JButton btnBack = new JButton("← Quay lại");
         btnBack.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btnBack.setBackground(new Color(52, 152, 219));
-        btnBack.setForeground(Color.RED);
+        btnBack.setForeground(Color.WHITE);
         btnBack.setFocusPainted(false);
         btnBack.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         btnBack.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -267,7 +294,7 @@ public class QuanLyNhanVien extends JPanel {
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 0));
         
-        btnThem = createStyledButton("Thêm", new Color(46, 204, 113));
+        btnThem = createStyledButton("Tạo", new Color(46, 204, 113));
         btnSua = createStyledButton("Sửa", new Color(52, 152, 219));
         btnDoiMatKhau = createStyledButton("Đổi MK", new Color(230, 126, 34));
         btnLamMoi = createStyledButton("Làm mới", new Color(149, 165, 166));
@@ -358,7 +385,7 @@ public class QuanLyNhanVien extends JPanel {
         table.setRowHeight(30);
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
         table.getTableHeader().setBackground(new Color(52, 73, 94));
-        table.getTableHeader().setForeground(Color.BLACK);
+        table.getTableHeader().setForeground(Color.WHITE);
         table.getTableHeader().setReorderingAllowed(false);
         table.setSelectionBackground(new Color(52, 152, 219));
         table.setSelectionForeground(Color.BLACK);
@@ -1696,6 +1723,12 @@ public class QuanLyNhanVien extends JPanel {
         
         cboPhanQuyen.setSelectedItem(table.getValueAt(row, 8).toString());
         cboStatus.setSelectedItem(table.getValueAt(row, 9).toString());
+        
+        btnThem.setEnabled(false);
+        if (permission != null) {
+            btnSua.setEnabled(permission.isDuocSua());
+            btnDoiMatKhau.setEnabled(permission.isDuocSua());
+        }
     }
     
     private void lamMoi() {
@@ -1730,6 +1763,8 @@ public class QuanLyNhanVien extends JPanel {
         
         generateNewEmployeeId();
         txtTen.requestFocus();
+        
+        applyPermissions();
     }
     
     private boolean validateInput() {

@@ -1,4 +1,13 @@
-﻿-- Tạo CSDL
+﻿USE master;
+GO
+
+ALTER DATABASE ShoeStoreDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+GO
+
+DROP DATABASE ShoeStoreDB;
+GO
+
+-- Tạo CSDL
 CREATE DATABASE ShoeStoreDB;
 GO
 
@@ -275,6 +284,15 @@ INSERT INTO CHITIETNHAPKHO (idCTNK, idNhapKho, idGiay, soLuong, giaNhap, thanhTi
 (N'CTNK05', N'NK002', N'G005', 60, 1000000.00, 60000000.00, N'Hoạt động');
 GO
 
+INSERT INTO CHUCNANG (idCN, tenChucNang, moTa, allowThem, allowSua) VALUES
+('CN001', N'Quản lý nhân viên', N'Chức năng quản lý nhân viên', 1,1),
+('CN002', N'Quản lý giày', N'Chức năng quản lý sản phẩm giày', 1,1),
+('CN003', N'Quản lý hóa đơn', N'Xem danh sách và chi tiết hóa đơn', 0,0),
+('CN004', N'Quản lý kho', N'Xem và nhập hàng', 0,0),
+('CN005', N'Quản lý khách hàng', N'Quản lý thông tin khách hàng', 1,1),
+('CN006', N'Báo cáo thống kê', N'Xem thống kê doanh thu, hàng hóa', 0,0);
+GO
+
 INSERT INTO CHITIETPHANQUYEN (idPQ, idCN, duocXem, duocThem, duocSua) VALUES
 -- PQ001: Admin (toàn quyền)
 ('PQ001', 'CN001', 1,1,1),
@@ -295,11 +313,3 @@ INSERT INTO CHITIETPHANQUYEN (idPQ, idCN, duocXem, duocThem, duocSua) VALUES
 ('PQ003', 'CN006', 1,0,0);
 GO
 
-INSERT INTO CHUCNANG (idCN, tenChucNang, moTa, allowThem, allowSua) VALUES
-('CN001', N'Quản lý nhân viên', N'Chức năng quản lý nhân viên', 1,1),
-('CN002', N'Quản lý giày', N'Chức năng quản lý sản phẩm giày', 1,1),
-('CN003', N'Quản lý hóa đơn', N'Xem danh sách và chi tiết hóa đơn', 0,0),
-('CN004', N'Quản lý kho', N'Xem và nhập hàng', 0,0),
-('CN005', N'Quản lý khách hàng', N'Quản lý thông tin khách hàng', 1,1),
-('CN006', N'Báo cáo thống kê', N'Xem thống kê doanh thu, hàng hóa', 0,0);
-GO
