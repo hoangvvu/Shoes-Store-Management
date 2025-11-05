@@ -12,13 +12,19 @@ import java.util.List;
 import DAO.*;
 import model.*;
 import com.toedter.calendar.JDateChooser;
-
-// Import thư viện JFreeChart
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.chart.renderer.category.LineAndShapeRenderer;
+import org.jfree.chart.renderer.category.StandardBarPainter;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.Plot;
+import org.jfree.chart.block.BlockBorder;
+import java.awt.BasicStroke;
+import java.awt.Paint;
 
 public class QuanLyThongKe extends JPanel {
     private JTable tableThongKe;
@@ -93,7 +99,6 @@ public class QuanLyThongKe extends JPanel {
     }
 
     // ... (createTitlePanel, createMainPanel, createMenuPanel, createMenuButton, createFilterPanel, createSummaryCard, createStyledButton giữ nguyên) ...
-    // ... (Bạn có thể copy các hàm này từ code trước) ...
     
     private JPanel createTitlePanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -222,6 +227,9 @@ public class QuanLyThongKe extends JPanel {
         return panel;
     }
 
+    /**
+     * Sửa: Thêm nút "Làm mới"
+     */
 	private JPanel createFilterPanel() {
 	    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
 	    panel.setBackground(Color.WHITE);
@@ -247,6 +255,12 @@ public class QuanLyThongKe extends JPanel {
 	    btnLoc.addActionListener(e -> locDuLieu());
 	    panel.add(btnLoc);
 	
+        // === NÚT MỚI ===
+        JButton btnLamMoi = createStyledButton("Làm mới", new Color(149, 165, 166)); // Màu xám
+        btnLamMoi.addActionListener(e -> locDuLieu()); // Chỉ cần gọi lại locDuLieu để tải lại view hiện tại
+        panel.add(btnLamMoi);
+        // === KẾT THÚC NÚT MỚI ===
+
 	    JButton btnXuatExcel = createStyledButton("Xuất Excel", new Color(46, 204, 113));
 	    btnXuatExcel.addActionListener(e -> xuatBaoCao());
 	    panel.add(btnXuatExcel);
@@ -437,7 +451,7 @@ public class QuanLyThongKe extends JPanel {
 
         // 1. Biểu đồ Doanh thu theo ngày (Line Chart)
         ChartPanel revenueChart = createRevenueByDayChart(tuNgay, denNgay);
-        revenueChart.setBorder(BorderFactory.createTitledBorder("Doanh thu theo ngày"));
+        revenueChart.setBorder(BorderFactory.createTitledBorder("Doanh thu theo ngày (Đã thanh toán)"));
         dashboardPanel.add(revenueChart);
 
         // 2. Biểu đồ Top 5 Sản phẩm (Bar Chart)
@@ -463,10 +477,13 @@ public class QuanLyThongKe extends JPanel {
     }
     
     /**
+     * Sửa: Chỉ tính toán trên các hóa đơn "Đã thanh toán"
      * Hàm riêng để cập nhật 3 thẻ summary, dùng cho cả dashboard và các mục chi tiết
      */
     private void updateSummaryCards(Date tuNgay, Date denNgay) {
-        List<HoaDon> listHD = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay));
+        List<HoaDon> listHD_raw = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay));
+        List<HoaDon> listHD = filterHoaDon(listHD_raw); // <<< LỌC HÓA ĐƠN
+        
         if (listHD == null) listHD = new ArrayList<>();
 
         float tongDoanhThu = 0;
@@ -474,7 +491,7 @@ public class QuanLyThongKe extends JPanel {
             tongDoanhThu += hd.getTongTien();
         }
         int tongDonHang = listHD.size();
-        int tongSL = tinhTongSoLuongBan(tuNgay, denNgay);
+        int tongSL = tinhTongSoLuongBan(tuNgay, denNgay); // (Hàm này cũng đã được lọc)
         
         lblTongDoanhThu.setText(df.format(tongDoanhThu) + " đ");
         lblTongDonHang.setText(String.valueOf(tongDonHang));
@@ -491,6 +508,7 @@ public class QuanLyThongKe extends JPanel {
      */
     private ChartPanel createRevenueByDayChart(Date tuNgay, Date denNgay) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        // getDataDoanhThuTheoNgay đã được sửa để lọc
         Map<String, Float> doanhThuTheoNgay = getDataDoanhThuTheoNgay(tuNgay, denNgay);
 
         for (Map.Entry<String, Float> entry : doanhThuTheoNgay.entrySet()) {
@@ -501,6 +519,11 @@ public class QuanLyThongKe extends JPanel {
             "", "Ngày", "Doanh thu (đ)",
             dataset, PlotOrientation.VERTICAL,
             false, true, false); 
+            
+        // === ÁP DỤNG THEME HIỆN ĐẠI ===
+        applyModernTheme(lineChart);
+        // ==============================
+
         ChartPanel chartPanel = new ChartPanel(lineChart);
         chartPanel.setPreferredSize(new Dimension(0, 250)); // Set chiều cao
         return chartPanel;
@@ -511,6 +534,7 @@ public class QuanLyThongKe extends JPanel {
      */
     private ChartPanel createTopProductsChart(Date tuNgay, Date denNgay) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        // getDataSanPhamBanChay đã được sửa để lọc
         Map<String, Integer> soLuongBan = getDataSanPhamBanChay(tuNgay, denNgay).getKey();
         
         List<Map.Entry<String, Integer>> sortedList = new ArrayList<>(soLuongBan.entrySet());
@@ -529,6 +553,11 @@ public class QuanLyThongKe extends JPanel {
             "", "Sản phẩm", "Số lượng bán",
             dataset, PlotOrientation.HORIZONTAL, // Biểu đồ cột ngang
             false, true, false);
+            
+        // === ÁP DỤNG THEME HIỆN ĐẠI ===
+        applyModernTheme(barChart);
+        // ==============================
+            
         ChartPanel chartPanel = new ChartPanel(barChart);
         chartPanel.setPreferredSize(new Dimension(0, 250)); // Set chiều cao
         return chartPanel;
@@ -539,6 +568,7 @@ public class QuanLyThongKe extends JPanel {
      */
     private ChartPanel createTopCustomersChart(Date tuNgay, Date denNgay) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        // getDataTopKhachHang đã được sửa để lọc
         Map<String, Float> tongTienKH = getDataTopKhachHang(tuNgay, denNgay).getKey();
         
         List<Map.Entry<String, Float>> sortedList = new ArrayList<>(tongTienKH.entrySet());
@@ -557,22 +587,30 @@ public class QuanLyThongKe extends JPanel {
             "", "Khách hàng", "Tổng chi tiêu (đ)",
             dataset, PlotOrientation.VERTICAL,
             false, true, false);
+            
+        // === ÁP DỤNG THEME HIỆN ĐẠI ===
+        applyModernTheme(barChart);
+        // ==============================
+            
         ChartPanel chartPanel = new ChartPanel(barChart);
         chartPanel.setPreferredSize(new Dimension(0, 250)); // Set chiều cao
         return chartPanel;
     }
 
     /**
+     * Sửa: Chỉ tính HĐ "Đã thanh toán"
      * HÀM MỚI: Tạo biểu đồ cột cho doanh thu theo tháng (dùng cho Dashboard)
      */
     private ChartPanel createRevenueByMonthChart(Date tuNgay, Date denNgay) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        List<HoaDon> listHD = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay));
+        List<HoaDon> listHD_raw = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay));
+        List<HoaDon> listHD = filterHoaDon(listHD_raw); // <<< LỌC HÓA ĐƠN
+        
         if (listHD == null) listHD = new ArrayList<>();
         
         Map<String, Float> doanhThuTheoThang = new TreeMap<>();
         
-        for (HoaDon hd : listHD) {
+        for (HoaDon hd : listHD) { // Dùng list đã lọc
             if (hd == null || hd.getNgayLap() == null) continue;
             String thang = monthFormat.format(hd.getNgayLap());
             doanhThuTheoThang.put(thang, doanhThuTheoThang.getOrDefault(thang, 0f) + hd.getTongTien());
@@ -586,6 +624,10 @@ public class QuanLyThongKe extends JPanel {
             "", "Tháng", "Doanh thu (đ)",
             dataset, PlotOrientation.VERTICAL,
             false, true, false);
+            
+        // === ÁP DỤNG THEME HIỆN ĐẠI ===
+        applyModernTheme(barChart);
+        // ==============================
         
         ChartPanel chartPanel = new ChartPanel(barChart);
         chartPanel.setPreferredSize(new Dimension(0, 250)); // Set chiều cao
@@ -597,12 +639,17 @@ public class QuanLyThongKe extends JPanel {
     // == CÁC HÀM LẤY DỮ LIỆU (TÁCH RA ĐỂ DÙNG CHUNG)
     // ==================================================================
 
+    /**
+     * Sửa: Lọc HĐ "Đã thanh toán"
+     */
     private Map<String, Float> getDataDoanhThuTheoNgay(Date tuNgay, Date denNgay) {
-        List<HoaDon> listHD = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay));
+        List<HoaDon> listHD_raw = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay));
+        List<HoaDon> listHD = filterHoaDon(listHD_raw); // <<< LỌC HÓA ĐƠN
+        
         if (listHD == null) listHD = new ArrayList<>();
         
         Map<String, Float> doanhThuTheoNgay = new TreeMap<>();
-        for (HoaDon hd : listHD) {
+        for (HoaDon hd : listHD) { // Dùng list đã lọc
             if (hd == null || hd.getNgayLap() == null) continue;
             String ngay = sdf.format(hd.getNgayLap());
             doanhThuTheoNgay.put(ngay, doanhThuTheoNgay.getOrDefault(ngay, 0f) + hd.getTongTien());
@@ -610,14 +657,19 @@ public class QuanLyThongKe extends JPanel {
         return doanhThuTheoNgay;
     }
     
+    /**
+     * Sửa: Lọc HĐ "Đã thanh toán"
+     */
     private Map.Entry<Map<String, Integer>, Map<String, Float>> getDataSanPhamBanChay(Date tuNgay, Date denNgay) {
-        List<HoaDon> listHD = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay));
+        List<HoaDon> listHD_raw = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay));
+        List<HoaDon> listHD = filterHoaDon(listHD_raw); // <<< LỌC HÓA ĐƠN
+        
         if (listHD == null) listHD = new ArrayList<>();
 
         Map<String, Integer> soLuongBan = new HashMap<>();
         Map<String, Float> doanhThuSP = new HashMap<>();
 
-        for (HoaDon hd : listHD) {
+        for (HoaDon hd : listHD) { // Dùng list đã lọc
             if (hd == null) continue;
             List<ChiTietHoaDon> listCT = chiTietHDDAO.getByHoaDon(hd.getIdHD());
             if (listCT == null) continue;
@@ -631,14 +683,19 @@ public class QuanLyThongKe extends JPanel {
         return new AbstractMap.SimpleEntry<>(soLuongBan, doanhThuSP);
     }
     
+    /**
+     * Sửa: Lọc HĐ "Đã thanh toán"
+     */
     private Map.Entry<Map<String, Float>, Map<String, Integer>> getDataTopKhachHang(Date tuNgay, Date denNgay) {
-        List<HoaDon> listHD = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay));
+        List<HoaDon> listHD_raw = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay));
+        List<HoaDon> listHD = filterHoaDon(listHD_raw); // <<< LỌC HÓA ĐƠN
+        
         if (listHD == null) listHD = new ArrayList<>();
 
         Map<String, Float> tongTienKH = new HashMap<>();
         Map<String, Integer> soDonKH = new HashMap<>();
 
-        for (HoaDon hd : listHD) {
+        for (HoaDon hd : listHD) { // Dùng list đã lọc
             if (hd == null) continue;
             String idKH = hd.getIdKH();
             tongTienKH.put(idKH, tongTienKH.getOrDefault(idKH, 0f) + hd.getTongTien());
@@ -651,6 +708,9 @@ public class QuanLyThongKe extends JPanel {
     // == CÁC HÀM THỐNG KÊ (ĐÃ CẬP NHẬT ĐỂ HIỂN THỊ CHART + TABLE)
     // ==================================================================
 
+    /**
+     * Sửa: Lọc HĐ "Đã thanh toán"
+     */
     private void thongKeDoanhThuTheoNgay() {
         modelThongKe.setRowCount(0);
         Date tuNgay = dateFrom.getDate();
@@ -661,10 +721,15 @@ public class QuanLyThongKe extends JPanel {
             return;
         }
 
+        // Hàm này đã được lọc
         Map<String, Float> doanhThuTheoNgay = getDataDoanhThuTheoNgay(tuNgay, denNgay);
-        List<HoaDon> listHD = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay)); // Lấy lại để đếm số đơn
+        
+        // Lấy lại list đã lọc để đếm số đơn
+        List<HoaDon> listHD_raw = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay)); 
+        List<HoaDon> listHD = filterHoaDon(listHD_raw); // <<< LỌC HÓA ĐƠN
+        
         Map<String, Integer> soDonTheoNgay = new TreeMap<>();
-        for (HoaDon hd : listHD) {
+        for (HoaDon hd : listHD) { // Dùng list đã lọc
             if (hd == null || hd.getNgayLap() == null) continue;
             String ngay = sdf.format(hd.getNgayLap());
             soDonTheoNgay.put(ngay, soDonTheoNgay.getOrDefault(ngay, 0) + 1);
@@ -687,10 +752,11 @@ public class QuanLyThongKe extends JPanel {
             tongDonHang += soDon;
         }
 
-        // Cập nhật summary cards
+        // Cập nhật summary cards (hàm này cũng đã được lọc)
         updateSummaryCards(tuNgay, denNgay);
         
         // === NÂNG CẤP: TẠO BIỂU ĐỒ VÀ HIỂN THỊ PANEL ===
+        // Hàm này gọi createRevenueByDayChart (đã được lọc)
         ChartPanel chartPanel = createRevenueByDayChart(tuNgay, denNgay);
         
         pnDetailDoanhThuNgay.removeAll(); // Xóa chart cũ (nếu có)
@@ -703,16 +769,21 @@ public class QuanLyThongKe extends JPanel {
         centerCardLayout.show(centerContentPanel, VIEW_DT_NGAY);
     }
 
+    /**
+     * Sửa: Lọc HĐ "Đã thanh toán"
+     */
     private void thongKeDoanhThuTheoThang() {
         modelThongKe.setRowCount(0);
         // Lưu ý: Thống kê này lấy TẤT CẢ dữ liệu, không theo bộ lọc
-        List<HoaDon> listHD = hoaDonDAO.getAll(); 
+        List<HoaDon> listHD_raw = hoaDonDAO.getAll(); 
+        List<HoaDon> listHD = filterHoaDon(listHD_raw); // <<< LỌC HÓA ĐƠN
+        
         if (listHD == null) listHD = new ArrayList<>();
 
         Map<String, Float> doanhThuTheoThang = new TreeMap<>();
         Map<String, Integer> soDonTheoThang = new TreeMap<>();
         
-        for (HoaDon hd : listHD) {
+        for (HoaDon hd : listHD) { // Dùng list đã lọc
             if (hd == null || hd.getNgayLap() == null) continue;
             String thang = monthFormat.format(hd.getNgayLap());
             doanhThuTheoThang.put(thang, doanhThuTheoThang.getOrDefault(thang, 0f) + hd.getTongTien());
@@ -744,8 +815,13 @@ public class QuanLyThongKe extends JPanel {
 
         // === NÂNG CẤP: TẠO BIỂU ĐỒ VÀ HIỂN THỊ PANEL ===
         JFreeChart barChart = ChartFactory.createBarChart(
-            "Biểu đồ doanh thu theo tháng (Tất cả)", "Tháng", "Doanh thu",
+            "Biểu đồ doanh thu theo tháng (Tất cả, Đã thanh toán)", "Tháng", "Doanh thu",
             chartDataset, PlotOrientation.VERTICAL, false, true, false);
+            
+        // === ÁP DỤNG THEME HIỆN ĐẠI ===
+        applyModernTheme(barChart);
+        // ==============================
+            
         ChartPanel chartPanel = new ChartPanel(barChart);
         chartPanel.setPreferredSize(new Dimension(0, 250));
 
@@ -764,6 +840,7 @@ public class QuanLyThongKe extends JPanel {
         Date tuNgay = dateFrom.getDate();
         Date denNgay = dateTo.getDate();
 
+        // Hàm này đã được lọc
         Map.Entry<Map<String, Integer>, Map<String, Float>> data = getDataSanPhamBanChay(tuNgay, denNgay);
         Map<String, Integer> soLuongBan = data.getKey();
         Map<String, Float> doanhThuSP = data.getValue();
@@ -798,13 +875,18 @@ public class QuanLyThongKe extends JPanel {
             tongDT += doanhThu;
         }
 
-        // Cập nhật summary cards
+        // Cập nhật summary cards (hàm này đã được lọc)
         updateSummaryCards(tuNgay, denNgay);
         
         // === NÂNG CẤP: TẠO BIỂU ĐỒ VÀ HIỂN THỊ PANEL ===
         JFreeChart barChart = ChartFactory.createBarChart(
             "Biểu đồ Top " + topN + " sản phẩm bán chạy", "Sản phẩm", "Số lượng",
             chartDataset, PlotOrientation.HORIZONTAL, false, true, false);
+            
+        // === ÁP DỤNG THEME HIỆN ĐẠI ===
+        applyModernTheme(barChart);
+        // ==============================
+            
         ChartPanel chartPanel = new ChartPanel(barChart);
         chartPanel.setPreferredSize(new Dimension(0, 300)); // Cần cao hơn
 
@@ -818,12 +900,17 @@ public class QuanLyThongKe extends JPanel {
         centerCardLayout.show(centerContentPanel, VIEW_SP_CHAY);
     }
 
+    /**
+     * Sửa: Lọc phiếu NK "Đã xác nhận"
+     */
     private void thongKeNhapHang() {
         modelThongKe.setRowCount(0);
         Date tuNgay = dateFrom.getDate();
         Date denNgay = dateTo.getDate();
 
-        List<NhapKho> listNK = nhapKhoDAO.getByDate(toSqlDate(tuNgay), toSqlDate(denNgay));
+        List<NhapKho> listNK_raw = nhapKhoDAO.getByDate(toSqlDate(tuNgay), toSqlDate(denNgay));
+        List<NhapKho> listNK = filterNhapKho(listNK_raw); // <<< LỌC PHIẾU NHẬP
+        
         if (listNK == null) listNK = new ArrayList<>();
 
         String[] columns = {"STT", "Mã phiếu", "Ngày nhập", "Nhà cung cấp", "Tổng tiền", "Trạng thái"};
@@ -835,7 +922,7 @@ public class QuanLyThongKe extends JPanel {
         int tongSL = 0;
         Map<String, Float> chiTheoNgay = new TreeMap<>(); // Dữ liệu cho chart
 
-        for (NhapKho nk : listNK) {
+        for (NhapKho nk : listNK) { // Dùng list đã lọc
             if (nk == null) continue;
             modelThongKe.addRow(new Object[]{
                 stt++, nk.getIdNhapKho(), nk.getNgayNhap() == null ? "N/A" : sdf.format(nk.getNgayNhap()),
@@ -870,8 +957,13 @@ public class QuanLyThongKe extends JPanel {
 
         // === NÂNG CẤP: TẠO BIỂU ĐỒ VÀ HIỂN THỊ PANEL ===
         JFreeChart lineChart = ChartFactory.createLineChart(
-            "Biểu đồ chi phí nhập hàng theo ngày", "Ngày", "Chi phí",
+            "Biểu đồ chi phí nhập hàng theo ngày (Đã xác nhận)", "Ngày", "Chi phí",
             chartDataset, PlotOrientation.VERTICAL, false, true, false);
+            
+        // === ÁP DỤNG THEME HIỆN ĐẠI ===
+        applyModernTheme(lineChart);
+        // ==============================
+            
         ChartPanel chartPanel = new ChartPanel(lineChart);
         chartPanel.setPreferredSize(new Dimension(0, 250));
 
@@ -890,6 +982,7 @@ public class QuanLyThongKe extends JPanel {
         Date tuNgay = dateFrom.getDate();
         Date denNgay = dateTo.getDate();
 
+        // Hàm này đã được lọc
         Map.Entry<Map<String, Float>, Map<String, Integer>> data = getDataTopKhachHang(tuNgay, denNgay);
         Map<String, Float> tongTienKH = data.getKey();
         Map<String, Integer> soDonKH = data.getValue();
@@ -922,13 +1015,18 @@ public class QuanLyThongKe extends JPanel {
             tongDoanhThu += tongTien;
         }
 
-        // Cập nhật summary cards
+        // Cập nhật summary cards (hàm này đã được lọc)
         updateSummaryCards(tuNgay, denNgay);
 
         // === NÂNG CẤP: TẠO BIỂU ĐỒ VÀ HIỂN THỊ PANEL ===
         JFreeChart barChart = ChartFactory.createBarChart(
             "Biểu đồ Top " + topN + " khách hàng", "Khách hàng", "Tổng chi tiêu",
             chartDataset, PlotOrientation.VERTICAL, false, true, false);
+            
+        // === ÁP DỤNG THEME HIỆN ĐẠI ===
+        applyModernTheme(barChart);
+        // ==============================
+            
         ChartPanel chartPanel = new ChartPanel(barChart);
         chartPanel.setPreferredSize(new Dimension(0, 250));
 
@@ -942,6 +1040,9 @@ public class QuanLyThongKe extends JPanel {
         centerCardLayout.show(centerContentPanel, VIEW_TOP_KH);
     }
 
+    /**
+     * Sửa: Lọc HĐ "Đã thanh toán" và NK "Đã xác nhận"
+     */
     private void baoCaoTongHop() {
         // Hàm này không thay đổi vì dùng JOptionPane
         Date tuNgay = dateFrom.getDate();
@@ -949,9 +1050,12 @@ public class QuanLyThongKe extends JPanel {
         java.sql.Date sqlTuNgay = toSqlDate(tuNgay);
         java.sql.Date sqlDenNgay = toSqlDate(denNgay);
 
-        List<HoaDon> listHD = hoaDonDAO.getByDateRange(sqlTuNgay, sqlDenNgay);
+        List<HoaDon> listHD_raw = hoaDonDAO.getByDateRange(sqlTuNgay, sqlDenNgay);
+        List<HoaDon> listHD = filterHoaDon(listHD_raw); // <<< LỌC HÓA ĐƠN
         if (listHD == null) listHD = new ArrayList<>();
-        List<NhapKho> listNK = nhapKhoDAO.getByDate(sqlTuNgay, sqlDenNgay);
+        
+        List<NhapKho> listNK_raw = nhapKhoDAO.getByDate(sqlTuNgay, sqlDenNgay);
+        List<NhapKho> listNK = filterNhapKho(listNK_raw); // <<< LỌC PHIẾU NHẬP
         if (listNK == null) listNK = new ArrayList<>();
 
         float tongDoanhThu = 0;
@@ -959,7 +1063,7 @@ public class QuanLyThongKe extends JPanel {
         int tongSLBan = 0;
         int tongSLNhap = 0;
 
-        for (HoaDon hd : listHD) {
+        for (HoaDon hd : listHD) { // Dùng list đã lọc
             if (hd == null) continue;
             tongDoanhThu += hd.getTongTien();
             List<ChiTietHoaDon> listCT = chiTietHDDAO.getByHoaDon(hd.getIdHD());
@@ -970,7 +1074,7 @@ public class QuanLyThongKe extends JPanel {
             }
         }
 
-        for (NhapKho nk : listNK) {
+        for (NhapKho nk : listNK) { // Dùng list đã lọc
             if (nk == null) continue;
             tongNhapHang += nk.getTongTien();
             List<ChiTietNhapKho> listCT = chiTietNKDAO.getByNhapKho(nk.getIdNhapKho());
@@ -986,6 +1090,8 @@ public class QuanLyThongKe extends JPanel {
         StringBuilder report = new StringBuilder();
         report.append("═══════════════════════════════════════════════════\n");
         report.append("           BÁO CÁO TỔNG HỢP KINH DOANH\n");
+        report.append("    (Chỉ bao gồm Hóa đơn 'Đã thanh toán' \n");
+        report.append("     và Phiếu nhập 'Đã xác nhận')\n");
         report.append("═══════════════════════════════════════════════════\n\n");
         if (tuNgay != null && denNgay != null) {
             report.append("Thời gian: ").append(sdf.format(tuNgay)).append(" → ").append(sdf.format(denNgay)).append("\n\n");
@@ -993,14 +1099,14 @@ public class QuanLyThongKe extends JPanel {
             report.append("Thời gian: N/A\n\n");
         }
         report.append("───────────────────────────────────────────────────\n");
-        report.append("I. DOANH THU BÁN HÀNG\n");
+        report.append("I. DOANH THU BÁN HÀNG (Đã thanh toán)\n");
         report.append("───────────────────────────────────────────────────\n");
         report.append("• Tổng số đơn hàng: ").append(listHD.size()).append("\n");
         report.append("• Tổng sản phẩm bán: ").append(tongSLBan).append("\n");
         report.append("• Tổng doanh thu: ").append(df.format(tongDoanhThu)).append(" đ\n\n");
 
         report.append("───────────────────────────────────────────────────\n");
-        report.append("II. NHẬP HÀNG\n");
+        report.append("II. NHẬP HÀNG (Đã xác nhận)\n");
         report.append("───────────────────────────────────────────────────\n");
         report.append("• Tổng phiếu nhập: ").append(listNK.size()).append("\n");
         report.append("• Tổng sản phẩm nhập: ").append(tongSLNhap).append("\n");
@@ -1031,12 +1137,17 @@ public class QuanLyThongKe extends JPanel {
 
     // ====================== HÀM HỖ TRỢ ======================
     
+    /**
+     * Sửa: Lọc HĐ "Đã thanh toán"
+     */
     private int tinhTongSoLuongBan(Date tuNgay, Date denNgay) {
-        List<HoaDon> listHD = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay));
+        List<HoaDon> listHD_raw = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay));
+        List<HoaDon> listHD = filterHoaDon(listHD_raw); // <<< LỌC HÓA ĐƠN
+        
         if (listHD == null) return 0;
         int tong = 0;
 
-        for (HoaDon hd : listHD) {
+        for (HoaDon hd : listHD) { // Dùng list đã lọc
             if (hd == null) continue;
             List<ChiTietHoaDon> listCT = chiTietHDDAO.getByHoaDon(hd.getIdHD());
             if (listCT == null) continue;
@@ -1105,6 +1216,132 @@ public class QuanLyThongKe extends JPanel {
                     "Lỗi khi xuất báo cáo: " + e.getMessage(),
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
                 e.printStackTrace();
+            }
+        }
+    }
+    
+    // ==========================================================
+    // == HÀM MỚI: CÁC HÀM LỌC DỮ LIỆU
+    // ==========================================================
+
+    /**
+     * Helper: Lọc và chỉ trả về các hóa đơn có trạng thái "Đã thanh toán"
+     */
+    private List<HoaDon> filterHoaDon(List<HoaDon> rawList) {
+        if (rawList == null) return new ArrayList<>();
+        List<HoaDon> filteredList = new ArrayList<>();
+        for (HoaDon hd : rawList) {
+            if (hd != null && "Đã thanh toán".equalsIgnoreCase(hd.getStatus())) {
+                filteredList.add(hd);
+            }
+        }
+        return filteredList;
+    }
+    
+    /**
+     * Helper: Lọc và chỉ trả về các phiếu nhập có trạng thái "Đã xác nhận"
+     */
+    private List<NhapKho> filterNhapKho(List<NhapKho> rawList) {
+        if (rawList == null) return new ArrayList<>();
+        List<NhapKho> filteredList = new ArrayList<>();
+        for (NhapKho nk : rawList) {
+            if (nk != null && "Đã xác nhận".equalsIgnoreCase(nk.getStatus())) {
+                filteredList.add(nk);
+            }
+        }
+        return filteredList;
+    }
+
+    // ==========================================================
+    // == HÀM MỚI: ÁP DỤNG THEME HIỆN ĐẠI CHO BIỂU ĐỒ
+    // ==========================================================
+    
+    /**
+     * Hàm helper để áp dụng theme phẳng, hiện đại cho JFreeChart.
+     * @param chart Đối tượng JFreeChart cần áp dụng theme.
+     */
+    public void applyModernTheme(JFreeChart chart) {
+        
+        // === 1. ĐỊNH NGHĨA BẢNG MÀU TRẺ TRUNG ===
+        // Bạn có thể thay đổi các màu này theo ý thích
+        final Paint[] PALETTE = new Paint[] {
+            new Color(26, 188, 156),  // Teal
+            new Color(52, 152, 219),  // Blue
+            new Color(155, 89, 182),  // Purple
+            new Color(241, 196, 15),  // Yellow
+            new Color(230, 126, 34),  // Orange
+            new Color(231, 76, 60),   // Red
+            new Color(46, 204, 113)   // Green
+        };
+
+        // === 2. TÙY CHỈNH CHUNG ===
+        Font axisFont = new Font("Segoe UI", Font.PLAIN, 12);
+        Font titleFont = new Font("Segoe UI", Font.BOLD, 16);
+        Font plotFont = new Font("Segoe UI", Font.PLAIN, 13);
+
+        // Tắt viền và nền mặc định
+        chart.setBackgroundPaint(Color.WHITE);
+        chart.setAntiAlias(true);
+        chart.setTextAntiAlias(true);
+        
+        // Bỏ phần Chú thích (Legend) nếu có (biểu đồ của bạn không cần)
+        if (chart.getLegend() != null) {
+            chart.getLegend().setBackgroundPaint(Color.WHITE);
+            chart.getLegend().setFrame(BlockBorder.NONE);
+        }
+
+        // === 3. TÙY CHỈNH VÙNG VẼ (PLOT) ===
+        Plot plot = chart.getPlot();
+        plot.setBackgroundPaint(Color.WHITE); // Nền vùng vẽ
+        plot.setOutlinePaint(null); // Bỏ đường viền quanh vùng vẽ
+
+        if (plot instanceof CategoryPlot) {
+            CategoryPlot categoryPlot = (CategoryPlot) plot;
+
+            // Tùy chỉnh Gridlines (đường lưới)
+            categoryPlot.setDomainGridlinesVisible(true);
+            categoryPlot.setRangeGridlinesVisible(true);
+            categoryPlot.setDomainGridlinePaint(new Color(235, 235, 235)); // Màu xám rất nhạt
+            categoryPlot.setRangeGridlinePaint(new Color(220, 220, 220));
+
+            // Tùy chỉnh Axes (trục)
+            categoryPlot.getDomainAxis().setLabelFont(axisFont);
+            categoryPlot.getDomainAxis().setTickLabelFont(axisFont);
+            categoryPlot.getRangeAxis().setLabelFont(axisFont);
+            categoryPlot.getRangeAxis().setTickLabelFont(axisFont);
+            
+            // === 4. TÙY CHỈNH RENDERER (THANH BAR, ĐƯỜNG LINE) ===
+            
+            if (categoryPlot.getRenderer() instanceof BarRenderer) {
+                BarRenderer renderer = (BarRenderer) categoryPlot.getRenderer();
+                
+                // **Quan trọng: Bỏ hiệu ứng gradient và đổ bóng**
+                renderer.setBarPainter(new StandardBarPainter());
+                renderer.setShadowVisible(false);
+                
+                // Tạo một renderer tùy chỉnh để TÔ MÀU CHO TỪNG CỘT
+                class CustomBarRenderer extends BarRenderer {
+                    @Override
+                    public Paint getItemPaint(int row, int col) {
+                        // Lấy màu từ bảng màu, xoay vòng
+                        return PALETTE[col % PALETTE.length];
+                    }
+                }
+                
+                CustomBarRenderer customRenderer = new CustomBarRenderer();
+                customRenderer.setBarPainter(new StandardBarPainter());
+                customRenderer.setShadowVisible(false);
+                customRenderer.setBaseItemLabelsVisible(false); // Tắt hiện số trên cột (nếu có)
+                
+                categoryPlot.setRenderer(customRenderer);
+                
+            } else if (categoryPlot.getRenderer() instanceof LineAndShapeRenderer) {
+                LineAndShapeRenderer renderer = (LineAndShapeRenderer) categoryPlot.getRenderer();
+                
+                // Cho đường line đậm hơn
+                renderer.setBaseStroke(new BasicStroke(2.5f));
+                // Đặt màu cho series đầu tiên
+                renderer.setSeriesPaint(0, PALETTE[1]); // Dùng màu Blue
             }
         }
     }

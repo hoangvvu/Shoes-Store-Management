@@ -204,10 +204,10 @@ GO
 
 
 INSERT INTO NHANVIEN (idNV, tenNV, ngaySinh, gioiTinh, sdt, diaChi, ngayVaoLam, username, password, idPQ, status) VALUES 
-(N'NV001', N'Vũ Việt Hoàng', '1995-05-15', N'Nam', '0901234567', N'Hà Nội', '2022-01-10', 'hoang', '123456', N'PQ002', N'active'),
-(N'NV002', N'Nguyễn Đức Tài', '2000-11-20', N'Nam', '0987654321', N'TP.HCM', '2023-03-01', 'tai', '123456', N'PQ002', N'active'),
-(N'NV003', N'Tống Minh Quang', '1998-03-10', N'Nam', '0345123789', N'Đà Nẵng', '2023-06-15', 'quang', '123456', N'PQ002', N'active'),
-(N'NV004', N'Nguyễn Hữu Anh Khoa', '2002-08-28', N'Nam', '0777888999', N'Cần Thơ', '2024-01-20', 'khoa', '123456', N'PQ001', N'active');
+(N'NV001', N'Vũ Việt Hoàng', '1995-05-15', N'Nam', '0901234567', N'Hà Nội', '2022-01-10', 'hoang', '123456', N'PQ002', N'Hoạt động'),
+(N'NV002', N'Nguyễn Đức Tài', '2000-11-20', N'Nam', '0987654321', N'TP.HCM', '2023-03-01', 'tai', '123456', N'PQ002', N'Hoạt động'),
+(N'NV003', N'Tống Minh Quang', '1998-03-10', N'Nam', '0345123789', N'Đà Nẵng', '2023-06-15', 'quang', '123456', N'PQ002', N'Hoạt động'),
+(N'NV004', N'Nguyễn Hữu Anh Khoa', '2002-08-28', N'Nam', '0777888999', N'Cần Thơ', '2024-01-20', 'khoa', '123456', N'PQ001', N'Hoạt động');
 GO
 
 -- Thêm Loại Giày (Không thay đổi)
@@ -226,11 +226,11 @@ INSERT INTO HANGGIAY VALUES 
 GO
 
 INSERT INTO GIAY VALUES 
-(N'G001', N'Nike Air Max 270', 42, 50, 2500000, N'Giày thể thao cao cấp', N'', N'LG001', N'HG001', N'active'),
-(N'G002', N'Adidas Ultraboost', 41, 30, 3200000, N'Giày chạy bộ chuyên nghiệp', N'', N'LG001', N'HG002', N'active'),
-(N'G003', N'Nike Air Force 1', 40, 45, 2800000, N'Giày sneaker cổ điển', N'', N'LG003', N'HG001', N'active'),
-(N'G004', N'Puma Suede Classic', 39, 25, 1800000, N'Giày sneaker phong cách', N'', N'LG003', N'HG003', N'active'),
-(N'G005', N'Converse Chuck', 38, 60, 1500000, N'Giày vải cổ điển', N'', N'LG003', N'HG004', N'active');
+(N'G001', N'Nike Air Max 270', 42, 50, 2500000, N'Giày thể thao cao cấp', N'', N'LG001', N'HG001', N'Hoạt động'),
+(N'G002', N'Adidas Ultraboost', 41, 30, 3200000, N'Giày chạy bộ chuyên nghiệp', N'', N'LG001', N'HG002', N'Hoạt động'),
+(N'G003', N'Nike Air Force 1', 40, 45, 2800000, N'Giày sneaker cổ điển', N'', N'LG003', N'HG001', N'Hoạt động'),
+(N'G004', N'Puma Suede Classic', 39, 25, 1800000, N'Giày sneaker phong cách', N'', N'LG003', N'HG003', N'Hoạt động'),
+(N'G005', N'Converse Chuck', 38, 60, 1500000, N'Giày vải cổ điển', N'', N'LG003', N'HG004', N'Hoạt động');
 GO
 
 -- Chèn dữ liệu vào bảng KHACHHANG đã cập nhật

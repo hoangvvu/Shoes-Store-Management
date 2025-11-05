@@ -34,7 +34,7 @@ public class LoginForm extends JFrame {
 
         // === PANEL TRÁI: ẢNH NỀN + LOGO ===
         JPanel leftPanel = new JPanel() {
-            private final Image bgImage = new ImageIcon("images/bb.jpg").getImage();
+            private final Image bgImage = new ImageIcon("images/gays.png").getImage();
 
             @Override
             protected void paintComponent(Graphics g) {

@@ -216,7 +216,7 @@ public class QuanLyGiay extends JPanel {
         
         gbc.gridx = 0; gbc.gridy = 10;
         formPanel.add(new JLabel("Trạng thái:"), gbc);
-        cboStatus = new JComboBox<>(new String[]{"active", "inactive"});
+        cboStatus = new JComboBox<>(new String[]{"Hoạt động", "Ngừng hoạt động"});
         gbc.gridx = 1;
         formPanel.add(cboStatus, gbc);
         
@@ -230,7 +230,7 @@ public class QuanLyGiay extends JPanel {
         JPanel panel = new JPanel(new GridLayout(1, 3, 10, 10));
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 0));
-        btnThem = createStyledButton("Thêm", new Color(46, 204, 113));
+        btnThem = createStyledButton("Tạo", new Color(46, 204, 113));
         btnSua = createStyledButton("Sửa", new Color(52, 152, 219));
         btnLamMoi = createStyledButton("Làm mới", new Color(149, 165, 166));
         panel.add(btnThem);

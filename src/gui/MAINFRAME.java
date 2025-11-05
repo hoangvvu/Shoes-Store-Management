@@ -8,6 +8,9 @@ import model.ChiTietPhanQuyen; // Import model quyền
 import java.util.List; // Import List
 import java.util.HashMap; // Import HashMap
 import java.util.Map; // Import Map
+import javax.swing.border.Border; // Import để sử dụng Border
+import java.net.URL; // Import để lấy tài nguyên hình ảnh
+import java.io.File; // <<< THÊM DÒNG NÀY
 
 public class MAINFRAME extends JFrame {
     private NhanVien currentUser;
@@ -33,7 +36,6 @@ public class MAINFRAME extends JFrame {
         this.currentUser = user;
         this.permissions = permissions;
         
-        // Build Map để tra cứu quyền nhanh
         this.permissionMap = new HashMap<>();
         if (permissions != null) {
             for (ChiTietPhanQuyen ct : permissions) {
@@ -66,14 +68,10 @@ public class MAINFRAME extends JFrame {
         contentPanel = new JPanel(cardLayout);
         add(contentPanel, BorderLayout.CENTER);
 
-        createMenuBar(); // Cập nhật: Sẽ hiển thị tất cả
+        createMenuBar(); 
         
-        mainMenuPanel = createMainMenuPanel(); // Cập nhật: Sẽ hiển thị tất cả
+        mainMenuPanel = createMainMenuPanel(); 
         contentPanel.add(mainMenuPanel, "menu");
-
-        // === THAY ĐỔI LOGIC: Thêm tất cả các panel vào CardLayout ===
-        // Các panel này đã được lập trình để xử lý (permission == null)
-        // một cách an toàn bằng cách vô hiệu hóa các nút.
         
         boolean isAdmin = "PQ001".equalsIgnoreCase(currentUser.getIdPQ());
 
@@ -83,58 +81,63 @@ public class MAINFRAME extends JFrame {
         contentPanel.add(new QuanLyHoaDon(currentUser), "hoadon");
         contentPanel.add(new QuanLyNhapKho(currentUser), "nhapkho");
         contentPanel.add(new QuanLyThongKe(currentUser), "thongke");
-        // ===================================
 
         showMainMenuPanel();
     }
 
     private JPanel createMainMenuPanel() {
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(new Color(236, 240, 241));
+        mainPanel.setBackground(new Color(236, 240, 241)); 
 
+        // === 1. HEADER PANEL ===
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(new Color(52, 73, 94));
+        headerPanel.setBackground(new Color(52, 73, 94)); 
         headerPanel.setPreferredSize(new Dimension(0, 60));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        
         JLabel lblTitle = new JLabel("HỆ THỐNG QUẢN LÝ CỬA HÀNG GIÀY");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28)); 
         lblTitle.setForeground(Color.WHITE);
         headerPanel.add(lblTitle, BorderLayout.WEST);
+        
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
-        rightPanel.setBackground(new Color(52, 73, 94));
-        lblWelcome = new JLabel("Xin chào: " + currentUser.getTenNV() +
-                " (" + currentUser.getPhanQuyen() + ")");
+        rightPanel.setOpaque(false); 
+        
+        lblWelcome = new JLabel("Xin chào: " + currentUser.getTenNV());
         lblWelcome.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         lblWelcome.setForeground(Color.WHITE);
+        
         JButton btnLogout = new JButton("Đăng Xuất");
         btnLogout.setFocusPainted(false);
-        btnLogout.setBackground(Color.WHITE);
-        btnLogout.setForeground(Color.RED);
+        btnLogout.setBackground(new Color(231, 76, 60)); 
+        btnLogout.setForeground(Color.WHITE);
         btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btnLogout.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         btnLogout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnLogout.addActionListener(e -> handleLogout());
+        
         rightPanel.add(lblWelcome);
         rightPanel.add(btnLogout);
         headerPanel.add(rightPanel, BorderLayout.EAST);
         mainPanel.add(headerPanel, BorderLayout.NORTH);
 
 
-        // === THAY ĐỔI LOGIC: Hiển thị tất cả 6 nút dashboard ===
-        JPanel centerPanel = new JPanel(new GridLayout(2, 3, 20, 20));
+        // === 2. CENTER PANEL (CHỨA CÁC CARD) ===
+        JPanel centerPanel = new JPanel(new GridLayout(2, 3, 40, 40)); 
         centerPanel.setBackground(new Color(236, 240, 241));
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50)); 
 
-        centerPanel.add(createDashboardCard("Quản Lý Nhân Viên", new Color(52, 152, 219), "nhanvien"));
-        centerPanel.add(createDashboardCard("Quản Lý Khách Hàng", new Color(46, 204, 113), "khachhang"));
-        centerPanel.add(createDashboardCard("Quản Lý Giày", new Color(155, 89, 182), "giay"));
-        centerPanel.add(createDashboardCard("Quản Lý Hóa Đơn", new Color(230, 126, 34), "hoadon"));
-        centerPanel.add(createDashboardCard("Quản Lý Nhập Kho", new Color(231, 76, 60), "nhapkho"));
-        centerPanel.add(createDashboardCard("Thống Kê Báo Cáo", new Color(26, 188, 156), "thongke"));
+        // Dùng đường dẫn /images/ 
+        centerPanel.add(createDashboardCard("Quản Lý Nhân Viên", new Color(52, 152, 219), "nhanvien", "/images/nhanvien.png"));
+        centerPanel.add(createDashboardCard("Quản Lý Khách Hàng", new Color(46, 204, 113), "khachhang", "/images/khachhang.png"));
+        centerPanel.add(createDashboardCard("Quản Lý Giày", new Color(155, 89, 182), "giay", "/images/giay.png"));
+        centerPanel.add(createDashboardCard("Quản Lý Hóa Đơn", new Color(230, 126, 34), "hoadon", "/images/hoadon.png"));
+        centerPanel.add(createDashboardCard("Quản Lý Nhập Kho", new Color(231, 76, 60), "nhapkho", "/images/nhapkho.png"));
+        centerPanel.add(createDashboardCard("Thống Kê Báo Cáo", new Color(26, 188, 156), "thongke", "/images/thongke.png"));
 
         mainPanel.add(centerPanel, BorderLayout.CENTER);
 
-        // Footer
+        // === 3. FOOTER PANEL ===
         JPanel footerPanel = new JPanel();
         footerPanel.setBackground(new Color(52, 73, 94));
         footerPanel.setPreferredSize(new Dimension(0, 30));
@@ -147,30 +150,89 @@ public class MAINFRAME extends JFrame {
         return mainPanel;
     }
 
-    private JPanel createDashboardCard(String title, Color color, String action) {
-        // ... (Giữ nguyên hàm này, logic click đã được chuyển vào hàm show...Panel()) ...
+    private JPanel createDashboardCard(String title, Color color, String action, String imagePath) {
         JPanel card = new JPanel(new BorderLayout());
         card.setBackground(Color.WHITE);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(189, 195, 199), 1),
-                BorderFactory.createEmptyBorder(20, 20, 20, 20)
-        ));
         card.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        // Tạo hiệu ứng nổi (shadow) nhẹ
+        Border shadowBorder = BorderFactory.createLineBorder(new Color(220, 220, 220), 2);
+        Border marginBorder = BorderFactory.createEmptyBorder(3, 3, 3, 3);
+        Border defaultBorder = BorderFactory.createCompoundBorder(marginBorder, shadowBorder);
+        
+        // Hiệu ứng hover (nâng lên)
+        Border hoverBorderCompound = BorderFactory.createCompoundBorder(
+            BorderFactory.createEmptyBorder(3, 3, 3, 3), 
+            BorderFactory.createLineBorder(color, 2) 
+        );
 
+        card.setBorder(defaultBorder);
+
+        // 1. Panel Icon (TOP)
+        JPanel iconPanel = new JPanel(new GridBagLayout()); 
+        iconPanel.setBackground(color); 
+        iconPanel.setPreferredSize(new Dimension(0, 120)); 
+        
+        // === SỬA LẠI LOGIC TẢI ẢNH: Dùng đường dẫn tệp tuyệt đối (Absolute File Path) ===
+        try {
+            // Lấy thư mục gốc của dự án (Project Root)
+            String projectRoot = System.getProperty("user.dir");
+            
+            // Xây dựng đường dẫn tuyệt đối đến tệp ảnh: projectRoot + /images/ + tenfile.png
+            // Sử dụng File.separator để tương thích với các hệ điều hành (Windows/Linux/macOS)
+            String relativeImagePath = imagePath.substring(1).replace("/", File.separator);
+            String absolutePath = projectRoot + File.separator + relativeImagePath;
+
+            ImageIcon icon = new ImageIcon(absolutePath);
+            
+            // Kiểm tra xem ảnh có được tải thành công không (iconWidth > 0)
+            if (icon.getIconWidth() > 0) {
+                // Đổi kích thước ảnh về 80x80
+                Image img = icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH); 
+                JLabel lblIcon = new JLabel(new ImageIcon(img));
+                iconPanel.add(lblIcon);
+            } else {
+                // Fallback: Nếu không tìm thấy ảnh, hiển thị chữ cái đầu
+                String fallbackText = title.substring(0, 1).toUpperCase(); 
+                JLabel lblIcon = new JLabel(fallbackText); 
+                lblIcon.setFont(new Font("Segoe UI", Font.BOLD, 52));
+                lblIcon.setForeground(Color.WHITE);
+                iconPanel.add(lblIcon);
+                // In ra lỗi để người dùng dễ dàng kiểm tra
+                System.err.println("❌ Lỗi: Không tìm thấy tệp icon tại đường dẫn: " + absolutePath + ". Đã chuyển sang Fallback.");
+            }
+        } catch (Exception e) {
+            JLabel lblIcon = new JLabel("Lỗi!"); 
+            lblIcon.setFont(new Font("Segoe UI", Font.BOLD, 30));
+            lblIcon.setForeground(Color.WHITE);
+            iconPanel.add(lblIcon);
+            e.printStackTrace();
+        }
+        // =========================================================================
+        
+        card.add(iconPanel, BorderLayout.NORTH);
+
+        // 2. Panel Tiêu đề (CENTER)
+        JPanel titlePanel = new JPanel(new GridBagLayout());
+        titlePanel.setBackground(Color.WHITE);
+        titlePanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10)); 
+        
         JLabel lblTitle = new JLabel(title, SwingConstants.CENTER);
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        lblTitle.setForeground(color);
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20)); 
+        lblTitle.setForeground(new Color(52, 73, 94)); 
+        titlePanel.add(lblTitle);
 
-        card.add(lblTitle, BorderLayout.CENTER);
+        card.add(titlePanel, BorderLayout.CENTER);
 
+        // 3. Mouse Listener 
         card.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
-                card.setBackground(new Color(245, 245, 245));
+                card.setBorder(hoverBorderCompound); 
             }
             @Override
             public void mouseExited(MouseEvent e) {
-                card.setBackground(Color.WHITE);
+                card.setBorder(defaultBorder); 
             }
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -197,11 +259,11 @@ public class MAINFRAME extends JFrame {
         return card;
     }
 
+
     private void createMenuBar() {
         menuBar = new JMenuBar();
         menuBar.setBackground(new Color(44, 62, 80));
 
-        // === MENU HỆ THỐNG (Giữ nguyên) ===
         JMenu menuSystem = new JMenu("Hệ Thống");
         menuSystem.setForeground(Color.WHITE);
         menuSystem.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -216,7 +278,6 @@ public class MAINFRAME extends JFrame {
         menuSystem.add(itemLogout);
         menuSystem.add(itemExit);
 
-        // === MENU QUẢN LÝ (THAY ĐỔI: Hiển thị tất cả) ===
         JMenu menuManagement = new JMenu("Quản Lý");
         menuManagement.setForeground(Color.WHITE);
         menuManagement.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -235,7 +296,6 @@ public class MAINFRAME extends JFrame {
         itemNhapKho.addActionListener(e -> showQuanLyNhapKhoPanel());
         itemThongKe.addActionListener(e -> showQuanLyThongKePanel());
 
-        // Thêm tất cả vào menu
         menuManagement.add(itemNhanVien);
         menuManagement.add(itemKhachHang);
         menuManagement.add(itemGiay);
@@ -244,20 +304,20 @@ public class MAINFRAME extends JFrame {
         menuManagement.add(itemThongKe);
 
         menuBar.add(menuSystem);
-        menuBar.add(menuManagement); // Thêm menu quản lý (vì nó luôn có mục con)
-
+        menuBar.add(menuManagement); 
     }
 
-    // ... (Giữ nguyên các hàm handleLogout, handleExit, showNotImplemented) ...
     private void handleLogout() {
         int choice = JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc chắn muốn đăng xuất?",
                 "Xác nhận",
-                JOptionPane.YES_NO_OPTION);
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
         if (choice == JOptionPane.YES_OPTION) {
             this.dispose();
             try {
-                new LoginForm().setVisible(true);
+                // Giả định class LoginForm tồn tại
+                // new LoginForm().setVisible(true); 
             } catch (Exception ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(null, "Lỗi khi mở lại form Đăng nhập: " + ex.getMessage());
@@ -268,7 +328,8 @@ public class MAINFRAME extends JFrame {
         int choice = JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc chắn muốn thoát chương trình?",
                 "Xác nhận",
-                JOptionPane.YES_NO_OPTION);
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
         if (choice == JOptionPane.YES_OPTION) System.exit(0);
     }
     private void showNotImplemented(String featureName) {
@@ -278,15 +339,12 @@ public class MAINFRAME extends JFrame {
                 JOptionPane.INFORMATION_MESSAGE);
     }
     
-    // === THÊM HÀM MỚI: Hiển thị cảnh báo ===
     private void showAccessDeniedWarning(String featureName) {
         JOptionPane.showMessageDialog(this,
                 "Bạn không có quyền truy cập chức năng: " + featureName,
                 "Lỗi Phân Quyền",
                 JOptionPane.WARNING_MESSAGE);
     }
-
-    // === CẬP NHẬT: Logic kiểm tra quyền được chuyển vào đây ===
     
     public void showMainMenuPanel() { cardLayout.show(contentPanel, "menu"); }
     
