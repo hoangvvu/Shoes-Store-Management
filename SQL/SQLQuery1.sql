@@ -93,16 +93,16 @@ GO
 
 -- Bảng KHACHHANG (Đã thêm: ngaySinh, gioiTinh)
 CREATE TABLE KHACHHANG (
-    idKH NVARCHAR(10) PRIMARY KEY,
-    tenKH NVARCHAR(100), 
-    ngaySinh DATE,       
-    gioiTinh NVARCHAR(10), 
-    sdt NVARCHAR(15),
-    diaChi NVARCHAR(255),
-    tongTien FLOAT,
-    status NVARCHAR(20)
+    idKH NVARCHAR(10) PRIMARY KEY,
+    tenKH NVARCHAR(100) NOT NULL, 
+    ngaySinh DATE NULL,
+    gioiTinh NVARCHAR(10) NULL,
+    sdt NVARCHAR(15)  NOT NULL,
+    diaChi NVARCHAR(255) NULL,
+    tongTien FLOAT DEFAULT 0,
+    status NVARCHAR(20) DEFAULT N'Hoạt động'
 );
-GO
+
 
 -- Bảng HOADON (Không thay đổi)
 CREATE TABLE HOADON (
@@ -226,11 +226,11 @@ INSERT INTO HANGGIAY VALUES 
 GO
 
 INSERT INTO GIAY VALUES 
-(N'G001', N'Nike Air Max 270', 42, 50, 2500000, N'Giày thể thao cao cấp', N'', N'LG001', N'HG001', N'Hoạt động'),
-(N'G002', N'Adidas Ultraboost', 41, 30, 3200000, N'Giày chạy bộ chuyên nghiệp', N'', N'LG001', N'HG002', N'Hoạt động'),
-(N'G003', N'Nike Air Force 1', 40, 45, 2800000, N'Giày sneaker cổ điển', N'', N'LG003', N'HG001', N'Hoạt động'),
-(N'G004', N'Puma Suede Classic', 39, 25, 1800000, N'Giày sneaker phong cách', N'', N'LG003', N'HG003', N'Hoạt động'),
-(N'G005', N'Converse Chuck', 38, 60, 1500000, N'Giày vải cổ điển', N'', N'LG003', N'HG004', N'Hoạt động');
+(N'G001', N'Nike Air Max 270', 42, 50, 2500000, N'Giày thể thao cao cấp', N'', N'LG001', N'HG001', N'active'),
+(N'G002', N'Adidas Ultraboost', 41, 30, 3200000, N'Giày chạy bộ chuyên nghiệp', N'', N'LG001', N'HG002', N'active'),
+(N'G003', N'Nike Air Force 1', 40, 45, 2800000, N'Giày sneaker cổ điển', N'', N'LG003', N'HG001', N'active'),
+(N'G004', N'Puma Suede Classic', 39, 25, 1800000, N'Giày sneaker phong cách', N'', N'LG003', N'HG003', N'active'),
+(N'G005', N'Converse Chuck', 38, 60, 1500000, N'Giày vải cổ điển', N'', N'LG003', N'HG004', N'active');
 GO
 
 -- Chèn dữ liệu vào bảng KHACHHANG đã cập nhật

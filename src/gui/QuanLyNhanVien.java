@@ -38,8 +38,8 @@ public class QuanLyNhanVien extends JPanel {
     
     private ChiTietPhanQuyen permission;
     private boolean isAdmin;
-    
-    // Map màu (chỉ để cho đẹp)
+    private Map<String, String> phanQuyenMap = new HashMap<>();
+    private Map<String, String> phanQuyenMap_IDtoName = new HashMap<>();
     private Map<String, Color> colorMap = new HashMap<>();
 
     public QuanLyNhanVien() {
@@ -415,6 +415,10 @@ public class QuanLyNhanVien extends JPanel {
         List<NhanVien> list = nhanVienDAO.getAll();
         
         for (NhanVien nv : list) {
+            // Lấy Tên Quyền từ ID bằng Map tra cứu (Giải quyết lỗi "tenQuyen cannot be resolved")
+            String tenQuyen = phanQuyenMap_IDtoName.get(nv.getIdPQ());
+            if (tenQuyen == null) tenQuyen = "(Không rõ)"; // Xử lý trường hợp không tìm thấy
+            
             tableModel.addRow(new Object[]{
                 nv.getIdNV(),
                 nv.getTenNV(),
@@ -424,7 +428,7 @@ public class QuanLyNhanVien extends JPanel {
                 nv.getDiaChi(),
                 nv.getNgayVaoLam() != null ? sdf.format(nv.getNgayVaoLam()) : "",
                 nv.getUsername(),
-                nv.getPhanQuyen(),
+                tenQuyen, // <<== THAY THẾ nv.getPhanQuyen() BẰNG tenQuyen
                 nv.getStatus()
             });
         }
@@ -432,9 +436,13 @@ public class QuanLyNhanVien extends JPanel {
     
     private void loadPhanQuyen() {
         cboPhanQuyen.removeAllItems();
+        phanQuyenMap.clear();
+        phanQuyenMap_IDtoName.clear();
         List<PhanQuyen> list = phanQuyenDAO.getAll();
         for (PhanQuyen pq : list) {
             cboPhanQuyen.addItem(pq.getTenQuyen());
+            phanQuyenMap.put(pq.getTenQuyen(), pq.getIdPQ());
+            phanQuyenMap_IDtoName.put(pq.getIdPQ(), pq.getTenQuyen());
         }
     }
     
@@ -500,8 +508,18 @@ public class QuanLyNhanVien extends JPanel {
             
             nv.setUsername(txtUsername.getText().trim());
             nv.setPassword(password);
-            nv.setPhanQuyen(cboPhanQuyen.getSelectedItem().toString());
             nv.setStatus(cboStatus.getSelectedItem().toString());
+            
+            String tenQuyen = cboPhanQuyen.getSelectedItem().toString();
+            String idPQ = phanQuyenMap.get(tenQuyen); // Tra cứu ID
+
+            if (idPQ == null) {
+                JOptionPane.showMessageDialog(this, "Lỗi phân quyền. Không tìm thấy ID.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            nv.setIdPQ(idPQ);
+           
             
             if (nhanVienDAO.insert(nv)) {
                 JOptionPane.showMessageDialog(this, "Thêm nhân viên thành công!", 
@@ -559,8 +577,17 @@ public class QuanLyNhanVien extends JPanel {
                 nv.setNgayVaoLam(new java.sql.Date(dateNgayVaoLam.getDate().getTime()));
             }
             
-            nv.setPhanQuyen(cboPhanQuyen.getSelectedItem().toString());
             nv.setStatus(cboStatus.getSelectedItem().toString());
+            
+            String tenQuyen = cboPhanQuyen.getSelectedItem().toString();
+            String idPQ = phanQuyenMap.get(tenQuyen); // Tra cứu ID
+
+            if (idPQ == null) {
+                JOptionPane.showMessageDialog(this, "Lỗi phân quyền. Không tìm thấy ID.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            nv.setIdPQ(idPQ);
             
             if (nhanVienDAO.update(nv)) {
                 JOptionPane.showMessageDialog(this, "Cập nhật nhân viên thành công!", 

@@ -347,11 +347,18 @@ public class QuanLyKhachHang extends JPanel {
             // Chuyển đổi java.util.Date sang java.sql.Date
             if (dateNgaySinh.getDate() != null) {
                 kh.setNgaySinh(new java.sql.Date(dateNgaySinh.getDate().getTime()));
+            } else {
+                kh.setNgaySinh(null); // Đảm bảo là NULL nếu không chọn
             }
             
             kh.setGioiTinh(cboGioiTinh.getSelectedItem().toString());
             kh.setSdt(txtSdt.getText().trim());
-            kh.setDiaChi(txtDiaChi.getText().trim());
+            
+            // === ĐÃ SỬA: Xử lý địa chỉ NULL ===
+            String diaChi = txtDiaChi.getText().trim();
+            kh.setDiaChi(diaChi.isEmpty() ? null : diaChi);
+            // ===================================
+            
             kh.setTongTien(0);
             kh.setStatus(cboStatus.getSelectedItem().toString());
             
@@ -395,11 +402,17 @@ public class QuanLyKhachHang extends JPanel {
             
             if (dateNgaySinh.getDate() != null) {
                 kh.setNgaySinh(new java.sql.Date(dateNgaySinh.getDate().getTime()));
+            } else {
+                kh.setNgaySinh(null); // Đảm bảo là NULL nếu không chọn
             }
             
             kh.setGioiTinh(cboGioiTinh.getSelectedItem().toString());
             kh.setSdt(txtSdt.getText().trim());
-            kh.setDiaChi(txtDiaChi.getText().trim());
+            
+            // === ĐÃ SỬA: Xử lý địa chỉ NULL ===
+            String diaChi = txtDiaChi.getText().trim();
+            kh.setDiaChi(diaChi.isEmpty() ? null : diaChi);
+            // ===================================
             
             // Giữ nguyên tổng tiền hiện tại
             String tongTienStr = txtTongTien.getText().replace(",", "").replace(" đ", "").trim();
@@ -494,10 +507,10 @@ public class QuanLyKhachHang extends JPanel {
         txtTen.setText(table.getValueAt(row, 1).toString());
         
         // Ngày sinh
-        String ngaySinhStr = table.getValueAt(row, 2).toString();
-        if (!ngaySinhStr.isEmpty()) {
+        Object ngaySinhObj = table.getValueAt(row, 2);
+        if (ngaySinhObj != null && !ngaySinhObj.toString().isEmpty()) {
             try {
-                dateNgaySinh.setDate(sdf.parse(ngaySinhStr));
+                dateNgaySinh.setDate(sdf.parse(ngaySinhObj.toString()));
             } catch (Exception e) {
                 dateNgaySinh.setDate(null);
             }
@@ -507,7 +520,10 @@ public class QuanLyKhachHang extends JPanel {
         
         cboGioiTinh.setSelectedItem(table.getValueAt(row, 3).toString());
         txtSdt.setText(table.getValueAt(row, 4).toString());
-        txtDiaChi.setText(table.getValueAt(row, 5).toString());
+        
+        // Địa chỉ
+        Object diaChiObj = table.getValueAt(row, 5);
+        txtDiaChi.setText(diaChiObj != null ? diaChiObj.toString() : "");
         
         String tongTien = table.getValueAt(row, 6).toString();
         tongTien = tongTien.replace(",", "").replace(" đ", "").trim();
@@ -568,12 +584,9 @@ public class QuanLyKhachHang extends JPanel {
             return false;
         }
         
-        if (txtDiaChi.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập địa chỉ!", 
-                "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-            txtDiaChi.requestFocus();
-            return false;
-        }
+        // === ĐÃ XÓA: Khối kiểm tra địa chỉ bắt buộc đã được gỡ bỏ ===
+        // if (txtDiaChi.getText().trim().isEmpty()) { ... }
+        // =========================================================
         
         return true;
     }

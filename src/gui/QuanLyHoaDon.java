@@ -10,13 +10,19 @@ import java.util.Date;
 import java.util.List;
 import DAO.*;
 import model.*;
+import com.toedter.calendar.JDateChooser; 
 
 public class QuanLyHoaDon extends JPanel {
     private JTable tableHoaDon, tableChiTiet, tableSanPham;
     private DefaultTableModel modelHoaDon, modelChiTiet, modelSanPham;
     private JTextField txtIdHD, txtIdNV, txtIdKH, txtTenKH, txtSDT, txtTimKiem, txtSoLuong;
     private JLabel lblTongTien, lblThanhToan;
-    private JButton btnTaoMoi, btnThemSP, btnXoaSP, btnLuuHD, btnHuyHD, btnTraCuuKH, btnLamMoi, btnTimKiem, btnXuatHD;
+    
+    // === ĐÃ SỬA: Thêm btnXoaHD ===
+    private JButton btnTaoMoi, btnThemSP, btnXoaSP, btnLuuHD, btnHuyHD, btnTraCuuKH, btnLamMoi, btnTimKiem, btnXuatHD, btnXoaHD;
+    
+    // === ĐÃ THÊM: ComboBox lọc trạng thái ===
+    private JComboBox<String> cboLocTrangThai;
     
     private DAO_HoaDon hoaDonDAO;
     private DAO_ChiTietHoaDon chiTietDAO;
@@ -48,18 +54,52 @@ public class QuanLyHoaDon extends JPanel {
         
         loadDanhSachHoaDon();
         loadDanhSachSanPham();
+        
+        // === ĐÃ THÊM: Khóa form khi khởi tạo ===
+        setFormTaoHoaDonEnabled(false);
     }
     
-    // Constructor với tham số NhanVien
+    // Constructor với tham số NhanVien (dòng 52)
     public QuanLyHoaDon(NhanVien user) {
-        this();
+        this(); // Gọi constructor gốc để khởi tạo giao diện
         this.currentUser = user;
         if (currentUser != null) {
             txtIdNV.setText(currentUser.getIdNV());
         }
+        
+        // === MỚI: Áp dụng quyền sau khi UI đã được tạo ===
+        applyPermissions();
+        // === ĐÃ THÊM: Khóa form khi khởi tạo (cũng cho constructor này) ===
+        setFormTaoHoaDonEnabled(false);
+    }
+    
+    // === ĐÃ SỬA: Phương thức applyPermissions() để fix lỗi getChucVu() === (dòng 72)
+    private void applyPermissions() {
+        if (btnXoaHD == null) return; // Đảm bảo nút đã được tạo
+
+        if (currentUser != null) {
+            String roleId = "";
+            try {
+                // GIẢ SỬ PHƯƠNG THỨC NÀY TRẢ VỀ ID QUYỀN (ví dụ: "PQ001")
+                roleId = currentUser.getIdPQ(); // Đổi từ getPhanQuyen() sang getIdPQ()
+            } catch (Exception e) {
+                 // Nếu lỗi, roleId sẽ là "" và nút xóa bị ẩn.
+            }
+            
+            // Dùng ID quyền đã tạo trong SQL (PQ001 là Admin)
+            if ("PQ001".equalsIgnoreCase(roleId)) {
+                btnXoaHD.setVisible(true); // Hiển thị nút Xóa cho Admin (PQ001)
+            } else {
+                btnXoaHD.setVisible(false); // Ẩn nút Xóa với nhân viên thường
+            }
+        } else {
+            // Nếu không có thông tin user, ẩn nút
+            btnXoaHD.setVisible(false);
+        }
     }
     
     private JPanel createTitlePanel() {
+        // ... (Không thay đổi) ...
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(new Color(236, 240, 241));
 
@@ -97,6 +137,7 @@ public class QuanLyHoaDon extends JPanel {
     }
     
     private JPanel createMainPanel() {
+        // ... (Không thay đổi) ...
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(new Color(236, 240, 241));
         
@@ -114,6 +155,7 @@ public class QuanLyHoaDon extends JPanel {
     }
     
     private JPanel createHoaDonPanel() {
+        // ... (Không thay đổi) ...
         JPanel mainPanel = new JPanel(new BorderLayout(5, 5));
         mainPanel.setBackground(Color.WHITE);
         mainPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -161,6 +203,7 @@ public class QuanLyHoaDon extends JPanel {
     }
     
     private JPanel createThongTinHDPanel() {
+        // ... (Không thay đổi) ...
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createTitledBorder("Thông tin hóa đơn"));
@@ -197,6 +240,11 @@ public class QuanLyHoaDon extends JPanel {
         btnTraCuuKH = createStyledButton("Tra cứu", new Color(52, 152, 219));
         btnTraCuuKH.setPreferredSize(new Dimension(80, 25));
         btnTraCuuKH.addActionListener(e -> traCuuKhachHang());
+        
+        // === ĐÃ SỬA: Quy trình - Các nút sẽ được kích hoạt bằng setFormTaoHoaDonEnabled ===
+        // txtSDT.setEnabled(false);
+        // btnTraCuuKH.setEnabled(false);
+        
         khPanel.add(txtSDT, BorderLayout.CENTER);
         khPanel.add(btnTraCuuKH, BorderLayout.EAST);
         gbc.gridx = 1;
@@ -218,6 +266,7 @@ public class QuanLyHoaDon extends JPanel {
     }
     
     private JPanel createChiTietHDPanel() {
+        // ... (Không thay đổi) ...
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createTitledBorder("Chi tiết hóa đơn"));
@@ -251,6 +300,7 @@ public class QuanLyHoaDon extends JPanel {
     }
     
     private JPanel createSanPhamPanel() {
+        // ... (Không thay đổi) ...
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createTitledBorder("Danh sách sản phẩm"));
@@ -290,6 +340,7 @@ public class QuanLyHoaDon extends JPanel {
     }
     
     private JPanel createTongTienPanel() {
+        // ... (Không thay đổi) ...
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
@@ -338,6 +389,7 @@ public class QuanLyHoaDon extends JPanel {
     }
     
     private JPanel createDanhSachHoaDonPanel() {
+        // ... (Không thay đổi) ...
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createCompoundBorder(
@@ -353,21 +405,35 @@ public class QuanLyHoaDon extends JPanel {
         lblHeader.setFont(new Font("Segoe UI", Font.BOLD, 16));
         headerPanel.add(lblHeader, BorderLayout.WEST);
         
-        // Tìm kiếm
+        // === ĐÃ SỬA: Thêm ComboBox lọc và cập nhật logic tìm kiếm ===
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         searchPanel.setBackground(Color.WHITE);
+        
+        // Bộ lọc trạng thái
+        searchPanel.add(new JLabel("Trạng thái:"));
+        String[] options = {"Tất cả", "Đã thanh toán", "Chờ thanh toán"};
+        cboLocTrangThai = new JComboBox<>(options);
+        cboLocTrangThai.addActionListener(e -> loadDanhSachHoaDon()); // Lọc khi thay đổi
+        searchPanel.add(cboLocTrangThai);
+        
+        // Tìm kiếm
         searchPanel.add(new JLabel("Tìm kiếm:"));
         txtTimKiem = new JTextField(15);
         searchPanel.add(txtTimKiem);
         btnTimKiem = createStyledButton("Tìm", new Color(52, 152, 219));
         btnTimKiem.setPreferredSize(new Dimension(80, 28));
-        btnTimKiem.addActionListener(e -> timKiemHoaDon());
+        btnTimKiem.addActionListener(e -> loadDanhSachHoaDon()); // Nút Tìm sẽ gọi hàm loadData
         searchPanel.add(btnTimKiem);
         
         btnLamMoi = createStyledButton("Làm mới", new Color(149, 165, 166));
         btnLamMoi.setPreferredSize(new Dimension(80, 28));
-        btnLamMoi.addActionListener(e -> loadDanhSachHoaDon());
+        btnLamMoi.addActionListener(e -> {
+            cboLocTrangThai.setSelectedIndex(0); // Đặt lại bộ lọc
+            txtTimKiem.setText(""); // Xóa từ khóa
+            loadDanhSachHoaDon(); // Tải lại
+        });
         searchPanel.add(btnLamMoi);
+        // ==========================================================
         
         headerPanel.add(searchPanel, BorderLayout.EAST);
         panel.add(headerPanel, BorderLayout.NORTH);
@@ -402,11 +468,20 @@ public class QuanLyHoaDon extends JPanel {
         JScrollPane scrollPane = new JScrollPane(tableHoaDon);
         panel.add(scrollPane, BorderLayout.CENTER);
         
-        // Nút xuất hóa đơn
+        // Nút Xóa và Xuất Hóa Đơn
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         bottomPanel.setBackground(Color.WHITE);
-        btnXuatHD = createStyledButton("Xuất hóa đơn", new Color(41, 128, 185));
-        btnXuatHD.setPreferredSize(new Dimension(150, 35));
+        
+        // Nút Xóa (chỉ Admin thấy)
+        btnXoaHD = createStyledButton("Xóa hóa đơn", new Color(231, 76, 60));
+        btnXoaHD.setPreferredSize(new Dimension(150, 35));
+        btnXoaHD.addActionListener(e -> xoaHoaDon());
+        btnXoaHD.setVisible(false); 
+        bottomPanel.add(btnXoaHD);
+        
+        // Nút Xuất Hóa Đơn (Thanh toán)
+        btnXuatHD = createStyledButton("Xác nhận thanh toán", new Color(41, 128, 185));
+        btnXuatHD.setPreferredSize(new Dimension(180, 35));
         btnXuatHD.addActionListener(e -> xuatHoaDon());
         bottomPanel.add(btnXuatHD);
         
@@ -415,7 +490,27 @@ public class QuanLyHoaDon extends JPanel {
         return panel;
     }
     
+    // === ĐÃ THÊM: Phương thức điều khiển trạng thái Form ===
+    private void setFormTaoHoaDonEnabled(boolean enabled) {
+        // Vô hiệu hóa/Kích hoạt các trường nhập liệu
+        txtSDT.setEnabled(enabled);
+        btnTraCuuKH.setEnabled(enabled);
+        
+        // Vô hiệu hóa/Kích hoạt panel sản phẩm
+        txtSoLuong.setEnabled(enabled);
+        btnThemSP.setEnabled(enabled);
+        btnXoaSP.setEnabled(enabled);
+        
+        // Vô hiệu hóa/Kích hoạt nút lưu/hủy
+        btnLuuHD.setEnabled(enabled);
+        btnHuyHD.setEnabled(enabled);
+        
+        // Nút Tạo Mới thì ngược lại
+        btnTaoMoi.setEnabled(!enabled);
+    }
+    
     private JButton createStyledButton(String text, Color bgColor) {
+        // ... (Không thay đổi) ...
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btn.setBackground(bgColor);
@@ -437,6 +532,7 @@ public class QuanLyHoaDon extends JPanel {
     }
     
     private void taoHoaDonMoi() {
+        // ... (Không thay đổi) ...
         // Generate ID mới
         currentHoaDonId = generateNextHoaDonId();
         txtIdHD.setText(currentHoaDonId);
@@ -456,11 +552,16 @@ public class QuanLyHoaDon extends JPanel {
         tongTienHD = 0;
         updateTongTien();
         
+        // === ĐÃ THÊM: Kích hoạt form ===
+        setFormTaoHoaDonEnabled(true);
+        txtSDT.requestFocus();
+        
         JOptionPane.showMessageDialog(this, "Đã tạo hóa đơn mới: " + currentHoaDonId,
             "Thành công", JOptionPane.INFORMATION_MESSAGE);
     }
     
     private String generateNextHoaDonId() {
+        // ... (Không thay đổi) ...
         List<HoaDon> list = hoaDonDAO.getAll();
         int maxId = 0;
         
@@ -479,6 +580,7 @@ public class QuanLyHoaDon extends JPanel {
     }
     
     private void traCuuKhachHang() {
+        // ... (Không thay đổi) ...
         String sdt = txtSDT.getText().trim();
         
         if (sdt.isEmpty()) {
@@ -498,51 +600,133 @@ public class QuanLyHoaDon extends JPanel {
                 "Xác nhận", JOptionPane.YES_NO_OPTION);
             
             if (choice == JOptionPane.YES_OPTION) {
-                taoKhachHangMoi(sdt);
+                // === ĐÃ SỬA: Gọi dialog form đầy đủ thay vì phương thức cũ ===
+                KhachHang newKH = showTaoKhachHangDialog(sdt);
+                if (newKH != null) {
+                    txtIdKH.setText(newKH.getIdKH());
+                    txtTenKH.setText(newKH.getTenKH());
+                }
+                // ==========================================================
             }
         }
     }
     
-    private void taoKhachHangMoi(String sdt) {
-        String ten = JOptionPane.showInputDialog(this, "Nhập tên khách hàng:");
-        if (ten == null || ten.trim().isEmpty()) return;
-        
-        String diaChi = JOptionPane.showInputDialog(this, "Nhập địa chỉ:");
-        if (diaChi == null || diaChi.trim().isEmpty()) return;
-        
-        // Generate ID mới
-        List<KhachHang> list = khachHangDAO.getAll();
-        int maxId = 0;
-        for (KhachHang kh : list) {
-            String id = kh.getIdKH();
-            if (id.startsWith("KH")) {
-                try {
-                    int num = Integer.parseInt(id.substring(2));
-                    if (num > maxId) maxId = num;
-                } catch (NumberFormatException e) {
+    // === ĐÃ THÊM: Phương thức mới hiển thị form đầy đủ ===
+    private KhachHang showTaoKhachHangDialog(String sdt) {
+        // 1. Tạo Panel Form
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(Color.WHITE);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        // Tên khách hàng (Bắt buộc)
+        gbc.gridx = 0; gbc.gridy = 0;
+        panel.add(new JLabel("Tên khách hàng:"), gbc);
+        JTextField txtTen = new JTextField(20);
+        gbc.gridx = 1; gbc.gridy = 0;
+        panel.add(txtTen, gbc);
+
+        // Số điện thoại (Đã có)
+        gbc.gridx = 0; gbc.gridy = 1;
+        panel.add(new JLabel("Số điện thoại:"), gbc);
+        JTextField txtSdt = new JTextField(sdt);
+        txtSdt.setEditable(false);
+        txtSdt.setBackground(new Color(240, 240, 240));
+        gbc.gridx = 1; gbc.gridy = 1;
+        panel.add(txtSdt, gbc);
+
+        // Ngày sinh (Không bắt buộc)
+        gbc.gridx = 0; gbc.gridy = 2;
+        panel.add(new JLabel("Ngày sinh:"), gbc);
+        JDateChooser dateNgaySinh = new JDateChooser();
+        dateNgaySinh.setDateFormatString("dd/MM/yyyy");
+        dateNgaySinh.setPreferredSize(new Dimension(150, 25));
+        gbc.gridx = 1; gbc.gridy = 2;
+        panel.add(dateNgaySinh, gbc);
+
+        // Giới tính (Không bắt buộc)
+        gbc.gridx = 0; gbc.gridy = 3;
+        panel.add(new JLabel("Giới tính:"), gbc);
+        JComboBox<String> cboGioiTinh = new JComboBox<>(new String[]{"Nam", "Nữ", "Khác"});
+        gbc.gridx = 1; gbc.gridy = 3;
+        panel.add(cboGioiTinh, gbc);
+
+        // Địa chỉ (Không bắt buộc)
+        gbc.gridx = 0; gbc.gridy = 4;
+        panel.add(new JLabel("Địa chỉ:"), gbc);
+        JTextField txtDiaChi = new JTextField(20);
+        gbc.gridx = 1; gbc.gridy = 4;
+        panel.add(txtDiaChi, gbc);
+
+        // 2. Hiển thị Dialog
+        int result = JOptionPane.showConfirmDialog(this, panel, "Tạo khách hàng mới", 
+                                                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        // 3. Xử lý kết quả
+        if (result == JOptionPane.OK_OPTION) {
+            // Validation
+            String ten = txtTen.getText().trim();
+            if (ten.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Tên khách hàng không được để trống!", 
+                    "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return null;
+            }
+
+            // Generate ID mới
+            List<KhachHang> list = khachHangDAO.getAll();
+            int maxId = 0;
+            for (KhachHang kh : list) {
+                String id = kh.getIdKH();
+                if (id.startsWith("KH")) {
+                    try {
+                        int num = Integer.parseInt(id.substring(2));
+                        if (num > maxId) maxId = num;
+                    } catch (NumberFormatException e) {
+                    }
                 }
             }
+            String newId = "KH" + String.format("%03d", maxId + 1);
+
+            // Tạo đối tượng KhachHang (cho phép NULL)
+            KhachHang kh = new KhachHang();
+            kh.setIdKH(newId);
+            kh.setTenKH(ten);
+            kh.setSdt(sdt);
+            
+            // Xử lý các trường NULL-able
+            String diaChi = txtDiaChi.getText().trim();
+            kh.setDiaChi(diaChi.isEmpty() ? null : diaChi); // Cho phép NULL
+            
+            if (dateNgaySinh.getDate() != null) {
+                kh.setNgaySinh(new java.sql.Date(dateNgaySinh.getDate().getTime()));
+            } else {
+                kh.setNgaySinh(null); // Cho phép NULL
+            }
+            
+            kh.setGioiTinh(cboGioiTinh.getSelectedItem().toString()); // Luôn có giá trị
+            
+            kh.setTongTien(0);
+            kh.setStatus("Hoạt động"); // Nhất quán với DB và QuanLyKhachHang.java
+
+            // Insert vào DB
+            if (khachHangDAO.insert(kh)) {
+                JOptionPane.showMessageDialog(this, "Đã tạo khách hàng mới!",
+                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                return kh; // Trả về khách hàng đã tạo
+            } else {
+                 JOptionPane.showMessageDialog(this, "Lỗi khi tạo khách hàng!",
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return null;
+            }
         }
         
-        String newId = "KH" + String.format("%03d", maxId + 1);
-        
-        KhachHang kh = new KhachHang();
-        kh.setIdKH(newId);
-        kh.setTenKH(ten);
-        kh.setSdt(sdt);
-        kh.setDiaChi(diaChi);
-        kh.setTongTien(0);
-        kh.setStatus("active");
-        
-        if (khachHangDAO.insert(kh)) {
-            txtIdKH.setText(newId);
-            txtTenKH.setText(ten);
-            JOptionPane.showMessageDialog(this, "Đã tạo khách hàng mới!",
-                "Thành công", JOptionPane.INFORMATION_MESSAGE);
-        }
+        return null; // Người dùng nhấn Cancel
     }
+    // ==================================================
     
     private void themSanPhamVaoHD() {
+        // ... (Không thay đổi) ...
         if (currentHoaDonId.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng tạo hóa đơn mới trước!",
                 "Cảnh báo", JOptionPane.WARNING_MESSAGE);
@@ -570,8 +754,20 @@ public class QuanLyHoaDon extends JPanel {
             float donGia = Float.parseFloat(giaStr);
             int tonKho = Integer.parseInt(tableSanPham.getValueAt(row, 4).toString());
             
-            if (soLuong > tonKho) {
-                JOptionPane.showMessageDialog(this, "Số lượng vượt quá tồn kho!",
+            // Kiểm tra số lượng đã thêm vào giỏ hàng
+            int soLuongTrongGio = 0;
+            for (int i = 0; i < modelChiTiet.getRowCount(); i++) {
+                if (modelChiTiet.getValueAt(i, 0).toString().equals(maSP)) {
+                    soLuongTrongGio += Integer.parseInt(modelChiTiet.getValueAt(i, 2).toString());
+                }
+            }
+            
+            if (soLuong + soLuongTrongGio > tonKho) {
+                JOptionPane.showMessageDialog(this, 
+                    "Số lượng vượt quá tồn kho!\n" +
+                    "Tồn kho: " + tonKho + "\n" +
+                    "Đã thêm: " + soLuongTrongGio + "\n" +
+                    "Không thể thêm: " + soLuong,
                     "Cảnh báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -599,6 +795,7 @@ public class QuanLyHoaDon extends JPanel {
     }
     
     private void xoaSanPhamKhoiHD() {
+        // ... (Không thay đổi) ...
         int row = tableChiTiet.getSelectedRow();
         if (row == -1) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn sản phẩm cần xóa!",
@@ -616,10 +813,12 @@ public class QuanLyHoaDon extends JPanel {
     }
     
     private void updateTongTien() {
+        // ... (Không thay đổi) ...
         lblTongTien.setText(df.format(tongTienHD) + " đ");
         lblThanhToan.setText(df.format(tongTienHD) + " đ");
     }
     
+    // Logic `luuHoaDon` chỉ lưu tạm, KHÔNG trừ tồn kho (Không thay đổi)
     private void luuHoaDon() {
         if (currentHoaDonId.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng tạo hóa đơn mới!",
@@ -647,7 +846,7 @@ public class QuanLyHoaDon extends JPanel {
             hd.setIdKH(txtIdKH.getText());
             hd.setNgayLap(new Date());
             hd.setTongTien(tongTienHD);
-            hd.setStatus("Chờ thanh toán");
+            hd.setStatus("Chờ thanh toán"); // Trạng thái phiếu tạm
             
             if (hoaDonDAO.insert(hd)) {
                 // Lưu chi tiết hóa đơn
@@ -670,24 +869,11 @@ public class QuanLyHoaDon extends JPanel {
                     cthd.setStatus("active");
                     
                     chiTietDAO.insert(cthd);
-                    
-                    // Cập nhật số lượng tồn kho
-                    String idGiay = cthd.getIdGiay();
-                    int soLuongMua = cthd.getSoLuong();
-                    Giay giay = giayDAO.getById(idGiay);
-                    if (giay != null) {
-                        int tonKhoMoi = giay.getSoLuong() - soLuongMua;
-                        giayDAO.updateSoLuong(idGiay, tonKhoMoi);
-                    }
                 }
                 
-                // Cập nhật tổng tiền khách hàng
-                khachHangDAO.updateTongTien(txtIdKH.getText(), tongTienHD);
-                
                 JOptionPane.showMessageDialog(this, 
-                    "Lưu hóa đơn thành công!\nMã hóa đơn: " + currentHoaDonId + 
-                    "\nTổng tiền: " + df.format(tongTienHD) + " đ" +
-                    "\nTrạng thái: Chờ thanh toán",
+                    "Lưu hóa đơn tạm thành công!\nMã hóa đơn: " + currentHoaDonId + 
+                    "\nTrạng thái: Chờ thanh toán\n(Chưa trừ tồn kho)",
                     "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 
                 // Reset form
@@ -700,8 +886,10 @@ public class QuanLyHoaDon extends JPanel {
                 tongTienHD = 0;
                 updateTongTien();
                 
+                // === ĐÃ THÊM: Vô hiệu hóa form sau khi lưu ===
+                setFormTaoHoaDonEnabled(false);
+                
                 loadDanhSachHoaDon();
-                loadDanhSachSanPham();
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Lỗi lưu hóa đơn: " + e.getMessage(),
@@ -711,6 +899,7 @@ public class QuanLyHoaDon extends JPanel {
     }
     
     private void huyHoaDon() {
+        // ... (Không thay đổi) ...
         if (currentHoaDonId.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Không có hóa đơn nào để hủy!",
                 "Cảnh báo", JOptionPane.WARNING_MESSAGE);
@@ -718,7 +907,7 @@ public class QuanLyHoaDon extends JPanel {
         }
         
         int choice = JOptionPane.showConfirmDialog(this,
-            "Bạn có chắc muốn hủy hóa đơn này?",
+            "Bạn có chắc muốn hủy phiếu tạm này?",
             "Xác nhận", JOptionPane.YES_NO_OPTION);
         
         if (choice == JOptionPane.YES_OPTION) {
@@ -731,15 +920,19 @@ public class QuanLyHoaDon extends JPanel {
             tongTienHD = 0;
             updateTongTien();
             
-            JOptionPane.showMessageDialog(this, "Đã hủy hóa đơn!",
+            // === ĐÃ THÊM: Vô hiệu hóa form sau khi hủy ===
+            setFormTaoHoaDonEnabled(false);
+            
+            JOptionPane.showMessageDialog(this, "Đã hủy hóa đơn tạm!",
                 "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         }
     }
     
+    // Logic `xuatHoaDon` là "Xác nhận thanh toán" VÀ trừ tồn kho (Không thay đổi)
     private void xuatHoaDon() {
         int row = tableHoaDon.getSelectedRow();
         if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn hóa đơn cần xuất!",
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn hóa đơn cần thanh toán!",
                 "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -749,39 +942,137 @@ public class QuanLyHoaDon extends JPanel {
         
         // Kiểm tra trạng thái
         if (trangThai.equals("Đã thanh toán")) {
-            JOptionPane.showMessageDialog(this, "Hóa đơn này đã được xuất trước đó!",
+            JOptionPane.showMessageDialog(this, "Hóa đơn này đã được thanh toán trước đó!",
                 "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         
         int choice = JOptionPane.showConfirmDialog(this,
-            "Xác nhận xuất hóa đơn: " + idHD + "?",
-            "Xác nhận xuất hóa đơn", JOptionPane.YES_NO_OPTION);
+            "Xác nhận thanh toán cho hóa đơn: " + idHD + "?\n" +
+            "Hệ thống sẽ cập nhật tồn kho và chi tiêu của khách hàng.",
+            "Xác nhận thanh toán", JOptionPane.YES_NO_OPTION);
         
         if (choice == JOptionPane.YES_OPTION) {
-            // Cập nhật trạng thái hóa đơn
-            HoaDon hd = hoaDonDAO.getById(idHD);
-            if (hd != null) {
+            
+            // Logic nghiệp vụ chuyển về đây
+            try {
+                List<ChiTietHoaDon> listCT = chiTietDAO.getByHoaDon(idHD);
+                if (listCT == null || listCT.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Lỗi: Không tìm thấy chi tiết của hóa đơn này.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                // 1. Kiểm tra tồn kho lần cuối 
+                for (ChiTietHoaDon ct : listCT) {
+                    Giay giay = giayDAO.getById(ct.getIdGiay());
+                    if (giay == null || giay.getSoLuong() < ct.getSoLuong()) {
+                        String tenGiay = (giay != null) ? giay.getTenGiay() : ct.getIdGiay();
+                        JOptionPane.showMessageDialog(this, 
+                            "Lỗi: Sản phẩm [" + tenGiay + "] không đủ tồn kho để xuất!\n" +
+                            "Số lượng yêu cầu: " + ct.getSoLuong() + "\n" +
+                            "Số lượng tồn kho: " + (giay != null ? giay.getSoLuong() : 0),
+                            "Lỗi Tồn Kho", JOptionPane.ERROR_MESSAGE);
+                        return; // Dừng toàn bộ giao dịch
+                    }
+                }
+
+                // 2. Cập nhật tồn kho
+                for (ChiTietHoaDon ct : listCT) {
+                    Giay giay = giayDAO.getById(ct.getIdGiay());
+                    int tonKhoMoi = giay.getSoLuong() - ct.getSoLuong();
+                    giayDAO.updateSoLuong(giay.getIdGiay(), tonKhoMoi);
+                }
+                
+                // Lấy thông tin hóa đơn
+                HoaDon hd = hoaDonDAO.getById(idHD);
+                if (hd == null) {
+                     JOptionPane.showMessageDialog(this, "Lỗi: Không tìm thấy hóa đơn.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // 3. Cập nhật tổng tiền cho khách hàng
+                khachHangDAO.updateTongTien(hd.getIdKH(), hd.getTongTien());
+
+                // 4. Cập nhật trạng thái hóa đơn
                 hd.setStatus("Đã thanh toán");
                 if (hoaDonDAO.update(hd)) {
-                    // Hiển thị hóa đơn
-                    hienThiHoaDonXuat(idHD);
+                    hienThiHoaDonXuat(idHD); 
                     
-                    // Reload danh sách
-                    loadDanhSachHoaDon();
+                    loadDanhSachHoaDon(); 
+                    loadDanhSachSanPham(); 
                     
                     JOptionPane.showMessageDialog(this, 
-                        "Xuất hóa đơn thành công!\nHóa đơn " + idHD + " đã được thanh toán.",
+                        "Xác nhận thanh toán thành công!\n✓ Đã cập nhật tồn kho.\n✓ Đã cập nhật tổng chi tiêu KH.",
                         "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 } else {
-                    JOptionPane.showMessageDialog(this, "Lỗi cập nhật trạng thái hóa đơn!",
-                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Lỗi cập nhật trạng thái hóa đơn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
+
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Lỗi nghiêm trọng khi xuất hóa đơn: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    
+    // Phương thức Xóa Hóa Đơn (Đã sửa lỗi gọi hàm) (dòng 905)
+    private void xoaHoaDon() {
+        int row = tableHoaDon.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn hóa đơn cần xóa!",
+                "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        String idHD = tableHoaDon.getValueAt(row, 0).toString();
+        String trangThai = tableHoaDon.getValueAt(row, 5).toString();
+        
+        // Chỉ được xóa khi "Chờ thanh toán"
+        if (!"Chờ thanh toán".equalsIgnoreCase(trangThai)) {
+            JOptionPane.showMessageDialog(this, 
+                "Không thể xóa hóa đơn đã thanh toán! \nChỉ được xóa hóa đơn có trạng thái 'Chờ thanh toán'.",
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        int choice = JOptionPane.showConfirmDialog(this,
+            "Bạn có chắc chắn muốn XÓA VĨNH VIỄN hóa đơn " + idHD + "?\n" +
+            "Hành động này không thể hoàn tác!",
+            "Xác nhận xóa hóa đơn", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            
+        if (choice == JOptionPane.YES_OPTION) {
+            try {
+                // Bước 1: Xóa tất cả ChiTietHoaDon (dòng 905 đã được sửa lỗi gọi hàm)
+                boolean chiTietDeleted = chiTietDAO.deleteByHoaDonId(idHD); 
+                
+                if (!chiTietDeleted) {
+                     // Nếu deleteByHoaDonId trả về false, ta kiểm tra xem có chi tiết nào không 
+                     // hoặc có ràng buộc ON DELETE CASCADE trong CSDL không
+                }
+                
+                // Bước 2: Xóa HoaDon
+                boolean hoaDonDeleted = hoaDonDAO.delete(idHD); 
+                
+                if (hoaDonDeleted) {
+                    JOptionPane.showMessageDialog(this, "Đã xóa thành công hóa đơn " + idHD + ".",
+                        "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    loadDanhSachHoaDon(); // Tải lại bảng
+                } else {
+                    JOptionPane.showMessageDialog(this, "Lỗi khi xóa hóa đơn.\nKiểm tra lại DAO_HoaDon.delete()", "Lỗi DAO", JOptionPane.ERROR_MESSAGE);
+                }
+                
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, 
+                    "Lỗi nghiêm trọng khi xóa: " + e.getMessage(), 
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
             }
         }
     }
     
     private void hienThiHoaDonXuat(String idHD) {
+        // ... (Không thay đổi) ...
         HoaDon hd = hoaDonDAO.getById(idHD);
         if (hd == null) return;
         
@@ -793,6 +1084,7 @@ public class QuanLyHoaDon extends JPanel {
         
         // Lấy thông tin nhân viên
         NhanVien nv = nhanVienDAO.getById(hd.getIdNV());
+        // Lỗi getChucVu() đã được sửa ở hàm applyPermissions()
         String tenNV = (nv != null) ? nv.getTenNV() : "N/A";
         
         // Lấy chi tiết hóa đơn
@@ -845,28 +1137,68 @@ public class QuanLyHoaDon extends JPanel {
             "Hóa đơn xuất: " + idHD, JOptionPane.INFORMATION_MESSAGE);
     }
     
+    // === ĐÃ SỬA: Hợp nhất bộ lọc và tìm kiếm vào một hàm ===
     private void loadDanhSachHoaDon() {
         modelHoaDon.setRowCount(0);
+        
+        // Lấy giá trị từ các bộ lọc
+        String statusFilter = "Tất cả";
+        if (cboLocTrangThai != null) { // Tránh lỗi NullPointerException khi khởi tạo
+            statusFilter = cboLocTrangThai.getSelectedItem().toString();
+        }
+        String keyword = txtTimKiem.getText().trim().toLowerCase();
+        
         List<HoaDon> list = hoaDonDAO.getAll();
         
         for (HoaDon hd : list) {
-            modelHoaDon.addRow(new Object[]{
-                hd.getIdHD(),
-                hd.getIdNV(),
-                hd.getIdKH(),
-                sdf.format(hd.getNgayLap()),
-                df.format(hd.getTongTien()) + " đ",
-                hd.getStatus()
-            });
+            // Lọc theo trạng thái
+            boolean statusMatch = false;
+            if (statusFilter.equals("Tất cả")) {
+                statusMatch = true;
+            } else {
+                statusMatch = hd.getStatus().equalsIgnoreCase(statusFilter);
+            }
+            
+            if (!statusMatch) {
+                continue; // Bỏ qua nếu không khớp trạng thái
+            }
+            
+            // Lọc theo từ khóa
+            boolean keywordMatch = false;
+            if (keyword.isEmpty()) {
+                keywordMatch = true;
+            } else {
+                String idHD = hd.getIdHD().toLowerCase();
+                String idKH = hd.getIdKH().toLowerCase();
+                String idNV = hd.getIdNV().toLowerCase();
+                
+                if (idHD.contains(keyword) || idKH.contains(keyword) || idNV.contains(keyword)) {
+                    keywordMatch = true;
+                }
+            }
+            
+            // Chỉ thêm vào bảng nếu khớp cả hai
+            if (statusMatch && keywordMatch) {
+                modelHoaDon.addRow(new Object[]{
+                    hd.getIdHD(),
+                    hd.getIdNV(),
+                    hd.getIdKH(),
+                    sdf.format(hd.getNgayLap()),
+                    df.format(hd.getTongTien()) + " đ",
+                    hd.getStatus()
+                });
+            }
         }
     }
     
     private void loadDanhSachSanPham() {
+        // ... (Không thay đổi) ...
         modelSanPham.setRowCount(0);
         List<Giay> list = giayDAO.getAll();
         
         for (Giay g : list) {
-            if (g.getStatus().equals("active") && g.getSoLuong() > 0) {
+            if ((g.getStatus().equalsIgnoreCase("active") || g.getStatus().equalsIgnoreCase("Hoạt động")) 
+                && g.getSoLuong() > 0) {
                 modelSanPham.addRow(new Object[]{
                     g.getIdGiay(),
                     g.getTenGiay(),
@@ -878,43 +1210,10 @@ public class QuanLyHoaDon extends JPanel {
         }
     }
     
-    private void timKiemHoaDon() {
-        String keyword = txtTimKiem.getText().trim().toLowerCase();
-        
-        if (keyword.isEmpty()) {
-            loadDanhSachHoaDon();
-            return;
-        }
-        
-        modelHoaDon.setRowCount(0);
-        List<HoaDon> list = hoaDonDAO.getAll();
-        
-        for (HoaDon hd : list) {
-            String idHD = hd.getIdHD().toLowerCase();
-            String idKH = hd.getIdKH().toLowerCase();
-            String idNV = hd.getIdNV().toLowerCase();
-            String status = hd.getStatus().toLowerCase();
-            
-            if (idHD.contains(keyword) || idKH.contains(keyword) || 
-                idNV.contains(keyword) || status.contains(keyword)) {
-                modelHoaDon.addRow(new Object[]{
-                    hd.getIdHD(),
-                    hd.getIdNV(),
-                    hd.getIdKH(),
-                    sdf.format(hd.getNgayLap()),
-                    df.format(hd.getTongTien()) + " đ",
-                    hd.getStatus()
-                });
-            }
-        }
-        
-        if (modelHoaDon.getRowCount() == 0) {
-            JOptionPane.showMessageDialog(this, "Không tìm thấy hóa đơn nào!",
-                "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-        }
-    }
+    // === ĐÃ XÓA: Phương thức timKiemHoaDon() cũ (đã gộp vào loadDanhSachHoaDon) ===
     
     private void xemChiTietHoaDon(int row) {
+        // ... (Không thay đổi) ...
         String idHD = tableHoaDon.getValueAt(row, 0).toString();
         String idNV = tableHoaDon.getValueAt(row, 1).toString();
         String idKH = tableHoaDon.getValueAt(row, 2).toString();

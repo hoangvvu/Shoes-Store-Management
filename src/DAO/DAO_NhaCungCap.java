@@ -29,6 +29,25 @@ public class DAO_NhaCungCap {
         }
         return list;
     }
+    
+    public NhaCungCap getByIdOrName(String query) {
+        // 1. Thử tìm theo ID (dùng hàm getById đã có)
+        NhaCungCap ncc = this.getById(query);
+        if (ncc != null) {
+            return ncc; // Tìm thấy theo ID
+        }
+        
+        // 2. Nếu không thấy, thử tìm theo Tên (dùng hàm searchByName đã có)
+        // Hàm searchByName trả về 1 danh sách (List)
+        List<NhaCungCap> list = this.searchByName(query);
+        if (list != null && !list.isEmpty()) {
+            // Trả về kết quả đầu tiên trong danh sách
+            return list.get(0); 
+        }
+        
+        // 3. Không tìm thấy
+        return null;
+    }
  
     public NhaCungCap getById(String id) {
         String sql = "SELECT * FROM NHACUNGCAP WHERE idNCC = ?";

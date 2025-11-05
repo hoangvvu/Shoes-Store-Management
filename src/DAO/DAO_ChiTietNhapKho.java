@@ -156,4 +156,21 @@ public class DAO_ChiTietNhapKho {
             return false;
         }
     }
+    
+    public boolean deleteByNhapKhoId(String idNhapKho) {
+        String sql = "DELETE FROM CHITIETNHAPKHO WHERE idNhapKho = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, idNhapKho);
+            int rows = ps.executeUpdate();
+            
+            // Trả về true nếu có ít nhất 1 dòng bị ảnh hưởng (bị xóa)
+            return rows > 0;
+        } catch (SQLException e) {
+            System.err.println("Lỗi deleteByNhapKhoId: " + e.getMessage());
+            return false;
+        }
+    }
 }

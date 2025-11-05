@@ -37,6 +37,23 @@ public class DAO_ChiTietHoaDon {
         return list;
     }
     
+    public boolean deleteByHoaDonId(String idHD) {
+        String sql = "DELETE FROM ChiTietHoaDon WHERE IdHD = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, idHD);
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            System.err.println("Lỗi khi xóa chi tiết hóa đơn: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    
     // Lấy theo ID
     public ChiTietHoaDon getById(String id) {
         String sql = "SELECT * FROM CHITIETHOADON WHERE idCTHD = ?";
