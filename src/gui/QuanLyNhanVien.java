@@ -75,21 +75,22 @@ public class QuanLyNhanVien extends JPanel {
         applyPermissions();
     }
     
+    // ========== SỬA VỊ TRÍ 1 ==========
     private void applyPermissions() {
         if (permission != null) {
             btnThem.setEnabled(permission.isDuocThem());
             btnSua.setEnabled(permission.isDuocSua());
-            // Liên kết quyền đổi MK với quyền Sửa
-            btnDoiMatKhau.setEnabled(permission.isDuocSua()); 
+            // (Đã xóa logic btnDoiMatKhau khỏi đây)
         } else {
             // Nếu không có quyền (lỗi), vô hiệu hóa hết
             btnThem.setEnabled(false);
             btnSua.setEnabled(false);
-            btnDoiMatKhau.setEnabled(false);
+            // (Đã xóa logic btnDoiMatKhau khỏi đây)
         }
         
-        // Áp dụng quy tắc đặc biệt: Chỉ Admin được quản lý phân quyền
+        // Áp dụng quy tắc đặc biệt: Chỉ Admin
         btnQuanLyPQ.setEnabled(this.isAdmin);
+        btnDoiMatKhau.setEnabled(this.isAdmin); // <<< SỬA: Chuyển logic xuống đây
     }
     
     private JPanel createTitlePanel() {
@@ -181,6 +182,7 @@ public class QuanLyNhanVien extends JPanel {
         dateNgaySinh = new JDateChooser();
         dateNgaySinh.setDateFormatString("dd/MM/yyyy");
         dateNgaySinh.setPreferredSize(new Dimension(150, 25));
+        dateNgaySinh.setMaxSelectableDate(new Date()); 
         gbc.gridx = 1;
         formPanel.add(dateNgaySinh, gbc);
         
@@ -220,12 +222,13 @@ public class QuanLyNhanVien extends JPanel {
         dateNgayVaoLam.setDateFormatString("dd/MM/yyyy");
         dateNgayVaoLam.setPreferredSize(new Dimension(150, 25));
         dateNgayVaoLam.setDate(new Date());
+        dateNgayVaoLam.setMaxSelectableDate(new Date()); 
         gbc.gridx = 1;
         formPanel.add(dateNgayVaoLam, gbc);
         
         // Username
         gbc.gridx = 0; gbc.gridy = 8;
-        JLabel lblUsername = new JLabel("Username:");
+        JLabel lblUsername = new JLabel("Tên đăng nhập:");
         lblUsername.setFont(labelFont);
         formPanel.add(lblUsername, gbc);
         txtUsername = new JTextField(15);
@@ -234,7 +237,7 @@ public class QuanLyNhanVien extends JPanel {
         
         // Password
         gbc.gridx = 0; gbc.gridy = 9;
-        JLabel lblPassword = new JLabel("Password:");
+        JLabel lblPassword = new JLabel("Mật khẩu:");
         lblPassword.setFont(labelFont);
         formPanel.add(lblPassword, gbc);
         txtPassword = new JPasswordField(15);
@@ -243,7 +246,7 @@ public class QuanLyNhanVien extends JPanel {
         
         // Confirm Password
         gbc.gridx = 0; gbc.gridy = 10;
-        JLabel lblConfirm = new JLabel("Xác nhận MK:");
+        JLabel lblConfirm = new JLabel("Xác nhận mật khẩu:");
         lblConfirm.setFont(labelFont);
         formPanel.add(lblConfirm, gbc);
         txtConfirmPassword = new JPasswordField(15);
@@ -296,9 +299,9 @@ public class QuanLyNhanVien extends JPanel {
         
         btnThem = createStyledButton("Tạo", new Color(46, 204, 113));
         btnSua = createStyledButton("Sửa", new Color(52, 152, 219));
-        btnDoiMatKhau = createStyledButton("Đổi MK", new Color(230, 126, 34));
+        btnDoiMatKhau = createStyledButton("Đổi mật khẩu", new Color(230, 126, 34));
         btnLamMoi = createStyledButton("Làm mới", new Color(149, 165, 166));
-        btnQuanLyPQ = createStyledButton("Quản lý PQ", new Color(155, 89, 182));
+        btnQuanLyPQ = createStyledButton("Quản lý phân quyền", new Color(155, 89, 182));
         
         panel.add(btnThem);
         panel.add(btnSua);
@@ -371,8 +374,8 @@ public class QuanLyNhanVien extends JPanel {
         
         panel.add(searchPanel, BorderLayout.NORTH);
         
-        String[] columns = {"Mã nhân viên", "Tên nhân viên", "Ngày sinh", "Giới tính", "SĐT", 
-                           "Địa chỉ", "Ngày vào làm", "Username", "Phân quyền", "Trạng thái"};
+        String[] columns = {"Mã nhân viên", "Tên nhân viên", "Ngày sinh", "Giới tính", "số điện thoại", 
+                           "Địa chỉ", "Ngày vào làm", "Tên đăng nhập", "Phân quyền", "Trạng thái"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -484,7 +487,7 @@ public class QuanLyNhanVien extends JPanel {
         }
         
         if (nhanVienDAO.isUsernameExist(txtUsername.getText().trim())) {
-            JOptionPane.showMessageDialog(this, "Username đã tồn tại!", 
+            JOptionPane.showMessageDialog(this, "Tên đăng nhập đã tồn tại!", 
                 "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -1644,7 +1647,7 @@ public class QuanLyNhanVien extends JPanel {
     }
     
     // =========================================================================
-    // CÁC PHƯƠNG THỨC CÒN LẠI (KHÔNG THAY ĐỔI)
+    // CÁC PHƯƠNG THỨC CÒN LẠI
     // =========================================================================
 
     private void timKiem(boolean showMessage) {
@@ -1704,6 +1707,7 @@ public class QuanLyNhanVien extends JPanel {
         return temp.replaceAll("đ", "d").replaceAll("Đ", "D");
     }
     
+    // ========== SỬA VỊ TRÍ 2 ==========
     private void hienThiThongTin(int row) {
         txtId.setText(table.getValueAt(row, 0).toString());
         txtTen.setText(table.getValueAt(row, 1).toString());
@@ -1752,10 +1756,17 @@ public class QuanLyNhanVien extends JPanel {
         cboStatus.setSelectedItem(table.getValueAt(row, 9).toString());
         
         btnThem.setEnabled(false);
+        
+        // Quyền Sửa (User thường)
         if (permission != null) {
             btnSua.setEnabled(permission.isDuocSua());
-            btnDoiMatKhau.setEnabled(permission.isDuocSua());
+        } else {
+            btnSua.setEnabled(false);
         }
+        
+        // Quyền Admin (luôn ghi đè)
+        btnDoiMatKhau.setEnabled(this.isAdmin); // <<< SỬA: Chỉ Admin
+        // (btnQuanLyPQ không cần set ở đây, vì nó không bị ảnh hưởng khi click)
     }
     
     private void lamMoi() {
@@ -1809,11 +1820,19 @@ public class QuanLyNhanVien extends JPanel {
             return false;
         }
         
+        // SỬA: Kiểm tra ngày sinh không được sau ngày vào làm
         if (dateNgayVaoLam.getDate() == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày vào làm!", 
                 "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return false;
         }
+        
+        if (dateNgaySinh.getDate().after(dateNgayVaoLam.getDate())) {
+            JOptionPane.showMessageDialog(this, "Ngày sinh không được sau ngày vào làm!", 
+                "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        // ===================================================
         
         if (txtSdt.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng nhập số điện thoại!", 
@@ -1866,6 +1885,14 @@ public class QuanLyNhanVien extends JPanel {
                 "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return false;
         }
+        
+        // SỬA: Kiểm tra ngày sinh không được sau ngày vào làm
+        if (dateNgaySinh.getDate().after(dateNgayVaoLam.getDate())) {
+            JOptionPane.showMessageDialog(this, "Ngày sinh không được sau ngày vào làm!", 
+                "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        // ===================================================
         
         if (txtSdt.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng nhập số điện thoại!", 

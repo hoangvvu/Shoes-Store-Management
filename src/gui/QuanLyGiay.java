@@ -13,7 +13,7 @@ import DAO.DAO_HangGiay;
 import model.Giay;
 import model.LoaiGiay;
 import model.HangGiay;
-import model.ChiTietPhanQuyen; 
+import model.ChiTietPhanQuyen;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,8 +23,14 @@ public class QuanLyGiay extends JPanel {
     private DefaultTableModel tableModel;
     private JTextField txtId, txtTen, txtSize, txtSoLuong, txtGiaBan, txtTimKiem;
     private JTextArea txtMoTa;
-    private JComboBox<String> cboLoaiGiay, cboHangGiay, cboStatus, cboLocHang;
-    private JButton btnThem, btnSua, btnLamMoi, btnTimKiem, btnChonAnh;
+    
+    // =================================================================
+    // SỬA ĐỔI LỚN: Bỏ cboLocTheo, cboGiaTriLoc. Dùng 1 cboFilter duy nhất
+    // =================================================================
+    private JComboBox<String> cboLoaiGiay, cboHangGiay, cboStatus;
+    private JComboBox<String> cboFilter; // Combobox LỌC DUY NHẤT
+    // SỬA ĐỔI: Thêm btnThemLoai
+    private JButton btnThem, btnSua, btnLamMoi, btnTimKiem, btnChonAnh, btnThemHang, btnThemLoai; 
     private JLabel lblHinhAnh;
     private DAO.DAO_Giay giayDAO;
     private DAO.DAO_LoaiGiay loaiGiayDAO;
@@ -33,8 +39,15 @@ public class QuanLyGiay extends JPanel {
     private String selectedImagePath = "";
     private Map<String, String> loaiGiayMap = new HashMap<>();
     private Map<String, String> loaiGiayIdMap = new HashMap<>();
-    private Map<String, String> hangGiayMap = new HashMap<>(); 
-    private Map<String, String> hangGiayIdMap = new HashMap<>(); 
+    private Map<String, String> hangGiayMap = new HashMap<>();
+    private Map<String, String> hangGiayIdMap = new HashMap<>();
+    
+    // Biến trạng thái cho cboFilter
+    private boolean isShowingCriteria = true; // true = đang hiển thị "Lọc theo...", false = đang hiển thị giá trị
+    private String currentFilterMode = ""; // "LOAI" hoặc "HANG"
+    // Lưu listener để có thể gỡ ra/thêm vào khi thay đổi item, tránh lỗi
+    private ActionListener cboFilterActionListener; 
+    
     private ChiTietPhanQuyen permission;
     
     public QuanLyGiay() {
@@ -50,7 +63,7 @@ public class QuanLyGiay extends JPanel {
         add(createFormPanel(), BorderLayout.WEST);
         add(createTablePanel(), BorderLayout.CENTER);
         
-        loadComboBoxData(); 
+        loadComboBoxData(); // Tải data cho form VÀ khởi tạo bộ lọc
         loadData();         
         generateNextId();
         
@@ -74,10 +87,28 @@ public class QuanLyGiay extends JPanel {
         if (permission != null) {
             btnThem.setEnabled(permission.isDuocThem());
             btnSua.setEnabled(permission.isDuocSua());
+            
+            // Áp dụng quyền cho nút Thêm Hãng
+            if (btnThemHang != null) {
+                btnThemHang.setEnabled(permission.isDuocThem());
+            }
+            // SỬA ĐỔI: Áp dụng quyền cho nút Thêm Loại
+            if (btnThemLoai != null) {
+                btnThemLoai.setEnabled(permission.isDuocThem());
+            }
         } else {
             // Nếu không có quyền (lỗi), vô hiệu hóa hết
             btnThem.setEnabled(false);
             btnSua.setEnabled(false);
+            
+            // Áp dụng quyền cho nút Thêm Hãng
+            if (btnThemHang != null) {
+                btnThemHang.setEnabled(false);
+            }
+            // SỬA ĐỔI: Áp dụng quyền cho nút Thêm Loại
+            if (btnThemLoai != null) {
+                btnThemLoai.setEnabled(false);
+            }
         }
     }
     
@@ -187,17 +218,47 @@ public class QuanLyGiay extends JPanel {
         gbc.gridx = 1;
         formPanel.add(txtGiaBan, gbc);
         
+        // --- SỬA ĐỔI: Thêm nút '+' cho Loại Giày ---
         gbc.gridx = 0; gbc.gridy = 7;
         formPanel.add(new JLabel("Loại giày:"), gbc);
         cboLoaiGiay = new JComboBox<>();
+        
+        // Gán 'btnThemLoai' cho biến thành viên
+        btnThemLoai = new JButton("+");
+        btnThemLoai.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnThemLoai.setPreferredSize(new Dimension(45, (int)cboLoaiGiay.getPreferredSize().getHeight()));
+        btnThemLoai.setMargin(new Insets(0, 0, 0, 0));
+        btnThemLoai.setToolTipText("Thêm loại giày mới");
+        btnThemLoai.addActionListener(e -> themLoaiGiayMoi());
+
+        JPanel loaiPanel = new JPanel(new BorderLayout(5, 0));
+        loaiPanel.setBackground(Color.WHITE);
+        loaiPanel.add(cboLoaiGiay, BorderLayout.CENTER);
+        loaiPanel.add(btnThemLoai, BorderLayout.EAST);
+        
         gbc.gridx = 1;
-        formPanel.add(cboLoaiGiay, gbc);
+        formPanel.add(loaiPanel, gbc);
+        // --- KẾT THÚC SỬA ĐỔI ---
         
         gbc.gridx = 0; gbc.gridy = 8;
         formPanel.add(new JLabel("Hãng giày:"), gbc);
         cboHangGiay = new JComboBox<>();
+        
+        // Gán 'btnThemHang' cho biến thành viên
+        btnThemHang = new JButton("+");
+        btnThemHang.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnThemHang.setPreferredSize(new Dimension(45, (int)cboHangGiay.getPreferredSize().getHeight()));
+        btnThemHang.setMargin(new Insets(0, 0, 0, 0));
+        btnThemHang.setToolTipText("Thêm hãng giày mới");
+        btnThemHang.addActionListener(e -> themHangGiayMoi());
+
+        JPanel hangPanel = new JPanel(new BorderLayout(5, 0));
+        hangPanel.setBackground(Color.WHITE);
+        hangPanel.add(cboHangGiay, BorderLayout.CENTER);
+        hangPanel.add(btnThemHang, BorderLayout.EAST);
+        
         gbc.gridx = 1;
-        formPanel.add(cboHangGiay, gbc);
+        formPanel.add(hangPanel, gbc);
         
         gbc.gridx = 0; gbc.gridy = 9;
         gbc.anchor = GridBagConstraints.NORTHWEST;
@@ -267,6 +328,8 @@ public class QuanLyGiay extends JPanel {
         panel.setBackground(new Color(236, 240, 241));
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         searchPanel.setBackground(new Color(236, 240, 241));
+        
+        // --- Thanh Tìm Kiếm ---
         JLabel lblSearch = new JLabel("Tìm kiếm:");
         lblSearch.setFont(new Font("Segoe UI", Font.BOLD, 14));
         searchPanel.add(lblSearch);
@@ -276,29 +339,50 @@ public class QuanLyGiay extends JPanel {
         btnTimKiem = createStyledButton("Tìm", new Color(41, 128, 185));
         btnTimKiem.setPreferredSize(new Dimension(80, 30));
         searchPanel.add(btnTimKiem);
-        btnTimKiem.addActionListener(e -> timKiem(true));
+        // Gọi hàm lọc/tìm kiếm GỘP
+        btnTimKiem.addActionListener(e -> capNhatDanhSachHienThi(true));
+        
         searchPanel.add(Box.createHorizontalStrut(20));
-        JLabel lblLocHang = new JLabel("Lọc hãng:");
-        lblLocHang.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        searchPanel.add(lblLocHang);
-        cboLocHang = new JComboBox<>();
-        cboLocHang.setPreferredSize(new Dimension(150, 30));
-        cboLocHang.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        cboLocHang.addActionListener(e -> locTheoHang());
-        searchPanel.add(cboLocHang);
-     // Tự động tìm kiếm khi thay đổi text
+        
+        // =================================================================
+        // SỬA ĐỔI: Chỉ dùng 1 cboFilter
+        // =================================================================
+        JLabel lblLoc = new JLabel("Lọc:");
+        lblLoc.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        searchPanel.add(lblLoc);
+        
+        cboFilter = new JComboBox<>();
+        cboFilter.setPreferredSize(new Dimension(180, 30)); 
+        cboFilter.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        
+        // Khởi tạo listener và lưu lại
+        cboFilterActionListener = e -> onFilterSelect();
+        cboFilter.addActionListener(cboFilterActionListener);
+        
+        // Khởi tạo trạng thái ban đầu
+        isShowingCriteria = true;
+        currentFilterMode = "";
+        loadFilterOptions("CRITERIA"); // Tải các mục "Lọc theo..."
+        
+        searchPanel.add(cboFilter);
+        // KẾT THÚC SỬA ĐỔI
+        
+        // Gọi hàm lọc/tìm kiếm GỘP
         txtTimKiem.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    timKiem(true); // Enter: có thông báo
+                    capNhatDanhSachHienThi(true); // Enter: có thông báo
                 } else {
-                    timKiem(false); // Gõ: không thông báo
+                    capNhatDanhSachHienThi(false); // Gõ: không thông báo
                 }
             }
         });
+        
         panel.add(searchPanel, BorderLayout.NORTH);
-        String[] columns = {"Hình ảnh", "Mã", "Tên giày", "Size", "Số lượng", "Giá bán", 
+        
+        // --- Bảng Dữ Liệu ---
+        String[] columns = {"Hình ảnh", "Mã giày", "Tên giày", "Size", "Số lượng", "Giá bán", 
                             "Loại giày", "Hãng giày", "Mô tả", "Trạng thái"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -412,31 +496,128 @@ public class QuanLyGiay extends JPanel {
     }
     
     private void loadComboBoxData() {
-        // SỬA: Load loại giày (Chỉ hiển thị TÊN)
-        cboLoaiGiay.removeAllItems();
+        // --- Xóa dữ liệu cũ (cho Form) ---
+        cboLoaiGiay.removeAllItems(); 
+        cboHangGiay.removeAllItems(); 
+        
         loaiGiayMap.clear();
-        loaiGiayIdMap.clear(); // Khởi tạo Map Tên -> ID
+        loaiGiayIdMap.clear();
+        hangGiayMap.clear();
+        hangGiayIdMap.clear();
+
+        // --- Load Loại Giày ---
         List<LoaiGiay> listLoai = loaiGiayDAO.getAll();
         for (LoaiGiay lg : listLoai) {
-            cboLoaiGiay.addItem(lg.getTenLoaiGiay()); // CHỈ THÊM TÊN
-            loaiGiayMap.put(lg.getIdLoaiGiay(), lg.getTenLoaiGiay());
-            loaiGiayIdMap.put(lg.getTenLoaiGiay(), lg.getIdLoaiGiay()); // LƯU MAPPING TÊN -> ID
+            String tenLoai = lg.getTenLoaiGiay();
+            cboLoaiGiay.addItem(tenLoai); // Add to Form
+            loaiGiayMap.put(lg.getIdLoaiGiay(), tenLoai);
+            loaiGiayIdMap.put(tenLoai, lg.getIdLoaiGiay());
         }
         
-        // SỬA: Load hãng giày (Chỉ hiển thị TÊN)
-        cboHangGiay.removeAllItems();
-        cboLocHang.removeAllItems();
-        cboLocHang.addItem("Tất cả");
-        hangGiayMap.clear(); 
-        hangGiayIdMap.clear(); 
-        
+        // --- Load Hãng Giày ---
         List<HangGiay> listHang = hangGiayDAO.getAll();
         for (HangGiay hg : listHang) {
-            cboHangGiay.addItem(hg.getTenHangGiay()); 
-            cboLocHang.addItem(hg.getTenHangGiay());   
+            String tenHang = hg.getTenHangGiay();
+            cboHangGiay.addItem(tenHang); // Add to Form
+            hangGiayMap.put(hg.getIdHangGiay(), tenHang);
+            hangGiayIdMap.put(tenHang, hg.getIdHangGiay());
+        }
+        
+        // SỬA ĐỔI: Khởi tạo cboFilter
+        if (cboFilter != null) {
+            loadFilterOptions("CRITERIA");
+        }
+    }
+    
+    // =================================================================
+    // HÀM MỚI: Tải lại nội dung cho cboFilter
+    // =================================================================
+    private void loadFilterOptions(String mode) {
+        // Kiểm tra null
+        if (cboFilter == null || cboFilterActionListener == null) {
+            return;
+        }
+
+        // Tạm thời gỡ listener để tránh kích hoạt vòng lặp khi .addItem
+        cboFilter.removeActionListener(cboFilterActionListener);
+        
+        cboFilter.removeAllItems();
+        
+        if (mode.equals("CRITERIA")) {
+            // Hiển thị các tiêu chí lọc
+            cboFilter.addItem("Lọc theo..."); // Mục mờ
+            cboFilter.addItem("Hiển thị Tất cả");
+            cboFilter.addItem("Lọc theo Loại Giày");
+            cboFilter.addItem("Lọc theo Hãng Giày");
+            isShowingCriteria = true;
+            currentFilterMode = "";
             
-            hangGiayMap.put(hg.getIdHangGiay(), hg.getTenHangGiay());
-            hangGiayIdMap.put(hg.getTenHangGiay(), hg.getIdHangGiay()); 
+        } else if (mode.equals("LOAI")) {
+            // Hiển thị các giá trị Lọai Giày
+            cboFilter.addItem("< Quay lại");
+            cboFilter.addItem("Tất cả Loại Giày");
+            for (String tenLoai : loaiGiayIdMap.keySet()) {
+                cboFilter.addItem(tenLoai);
+            }
+            isShowingCriteria = false;
+            // currentFilterMode đã được set là "LOAI" trước khi gọi hàm này
+            
+        } else if (mode.equals("HANG")) {
+            // Hiển thị các giá trị Hãng Giày
+            cboFilter.addItem("< Quay lại");
+            cboFilter.addItem("Tất cả Hãng Giày");
+            for (String tenHang : hangGiayIdMap.keySet()) {
+                cboFilter.addItem(tenHang);
+            }
+            isShowingCriteria = false;
+            // currentFilterMode đã được set là "HANG" trước khi gọi hàm này
+        }
+        
+        // Thêm lại listener
+        cboFilter.addActionListener(cboFilterActionListener);
+    }
+    
+    // =================================================================
+    // HÀM MỚI: Xử lý sự kiện khi chọn cboFilter
+    // =================================================================
+    private void onFilterSelect() {
+        if (cboFilter.getSelectedItem() == null) {
+            return;
+        }
+        
+        String selected = cboFilter.getSelectedItem().toString();
+        
+        if (isShowingCriteria) {
+            // === Đang ở màn hình chọn TIÊU CHÍ ===
+            
+            if (selected.equals("Lọc theo Loại Giày")) {
+                currentFilterMode = "LOAI"; // Lưu trạng thái
+                loadFilterOptions("LOAI"); // Tải lại combobox với các Loại
+                
+            } else if (selected.equals("Lọc theo Hãng Giày")) {
+                currentFilterMode = "HANG"; // Lưu trạng thái
+                loadFilterOptions("HANG"); // Tải lại combobox với các Hãng
+                
+            } else if (selected.equals("Hiển thị Tất cả")) {
+                // Đã chọn "Hiển thị Tất cả", lọc lại bảng
+                capNhatDanhSachHienThi(false); 
+                
+            } else if (selected.equals("Lọc theo...")) {
+                // Không làm gì cả
+            }
+            
+        } else {
+            // === Đang ở màn hình chọn GIÁ TRỊ ===
+            
+            if (selected.equals("< Quay lại")) {
+                loadFilterOptions("CRITERIA"); // Tải lại các Tiêu chí
+                // Khi quay lại, cũng lọc lại bảng (tương đương "Hiển thị tất cả")
+                capNhatDanhSachHienThi(false);
+            } else {
+                // Đã chọn một giá trị (Vd: "Sneaker" hoặc "Tất cả Loại Giày")
+                // -> Lọc lại bảng
+                capNhatDanhSachHienThi(false);
+            }
         }
     }
     
@@ -632,32 +813,218 @@ public class QuanLyGiay extends JPanel {
         }
     }
     
-    private void timKiem() {
-        timKiem(false); // Gọi với showMessage = false (tìm tự động)
-    }
-
-    // Phương thức tìm kiếm với tùy chọn hiển thị thông báo
-    private void timKiem(boolean showMessage) {
-        String keyword = txtTimKiem.getText().trim().toLowerCase();
-
-        if (keyword.isEmpty()) {
-            loadData();
+    // =================================================================
+    // HÀM MỚI: Thêm loại giày
+    // =================================================================
+    private void themLoaiGiayMoi() {
+        String tenLoaiMoi = JOptionPane.showInputDialog(this, 
+                "Nhập tên loại giày mới:", 
+                "Thêm loại giày", 
+                JOptionPane.PLAIN_MESSAGE);
+        
+        if (tenLoaiMoi == null || tenLoaiMoi.trim().isEmpty()) {
+            return; // Người dùng hủy
+        }
+        
+        tenLoaiMoi = tenLoaiMoi.trim();
+        
+        // 1. Kiểm tra xem tên loại đã tồn tại chưa
+        boolean daTonTai = false;
+        for (String ten : loaiGiayIdMap.keySet()) {
+            if (ten.equalsIgnoreCase(tenLoaiMoi)) {
+                daTonTai = true;
+                break;
+            }
+        }
+        
+        if (daTonTai) {
+            JOptionPane.showMessageDialog(this, "Loại giày này đã tồn tại!", 
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;
         }
+        
+        // 2. Tạo ID mới cho loại
+        List<LoaiGiay> listLoai = loaiGiayDAO.getAll();
+        int maxId = 0;
+        for (LoaiGiay lg : listLoai) {
+            String id = lg.getIdLoaiGiay();
+            // Giả sử ID loại giày bắt đầu bằng 'L'
+            if (id.startsWith("L")) { 
+                try {
+                    int num = Integer.parseInt(id.substring(1));
+                    if (num > maxId) maxId = num;
+                } catch (NumberFormatException e) {
+                }
+            }
+        }
+        String newId = "L" + String.format("%03d", maxId + 1);
+        
+        // 3. Thêm vào database
+        LoaiGiay newLoai = new LoaiGiay();
+        newLoai.setIdLoaiGiay(newId);
+        newLoai.setTenLoaiGiay(tenLoaiMoi);
+        
+        try {
+            if (loaiGiayDAO.insert(newLoai)) {
+                JOptionPane.showMessageDialog(this, "Thêm loại '" + tenLoaiMoi + "' thành công!", 
+                        "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                
+                // 4. Tải lại dữ liệu combobox (cả form và bộ lọc)
+                loadComboBoxData();
+                
+                // 5. Tự động chọn loại vừa thêm
+                cboLoaiGiay.setSelectedItem(tenLoaiMoi);
+            } else {
+                JOptionPane.showMessageDialog(this, "Thêm loại thất bại!", 
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception ex) {
+             JOptionPane.showMessageDialog(this, "Lỗi khi thêm loại: " + ex.getMessage(), 
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    // HÀM MỚI: Thêm hãng giày
+    private void themHangGiayMoi() {
+        String tenHangMoi = JOptionPane.showInputDialog(this, 
+                "Nhập tên hãng giày mới:", 
+                "Thêm hãng giày", 
+                JOptionPane.PLAIN_MESSAGE);
+        
+        if (tenHangMoi == null || tenHangMoi.trim().isEmpty()) {
+            return; // Người dùng hủy
+        }
+        
+        tenHangMoi = tenHangMoi.trim();
+        
+        // 1. Kiểm tra xem tên hãng đã tồn tại chưa
+        boolean daTonTai = false;
+        for (String ten : hangGiayIdMap.keySet()) {
+            if (ten.equalsIgnoreCase(tenHangMoi)) {
+                daTonTai = true;
+                break;
+            }
+        }
+        
+        if (daTonTai) {
+            JOptionPane.showMessageDialog(this, "Hãng giày này đã tồn tại!", 
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // 2. Tạo ID mới cho hãng
+        List<HangGiay> listHang = hangGiayDAO.getAll();
+        int maxId = 0;
+        for (HangGiay hg : listHang) {
+            String id = hg.getIdHangGiay();
+            if (id.startsWith("H")) {
+                try {
+                    int num = Integer.parseInt(id.substring(1));
+                    if (num > maxId) maxId = num;
+                } catch (NumberFormatException e) {
+                }
+            }
+        }
+        String newId = "H" + String.format("%03d", maxId + 1);
+        
+        // 3. Thêm vào database
+        HangGiay newHang = new HangGiay();
+        newHang.setIdHangGiay(newId);
+        newHang.setTenHangGiay(tenHangMoi);
+        
+        try {
+            if (hangGiayDAO.insert(newHang)) {
+                JOptionPane.showMessageDialog(this, "Thêm hãng '" + tenHangMoi + "' thành công!", 
+                        "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                
+                // 4. Tải lại dữ liệu combobox (cả form và bộ lọc)
+                loadComboBoxData();
+                
+                // 5. Tự động chọn hãng vừa thêm
+                cboHangGiay.setSelectedItem(tenHangMoi);
+            } else {
+                JOptionPane.showMessageDialog(this, "Thêm hãng thất bại!", 
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception ex) {
+             JOptionPane.showMessageDialog(this, "Lỗi khi thêm hãng: " + ex.getMessage(), 
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    // =================================================================
+    // SỬA ĐỔI: HÀM LỌC GỘP (Đọc từ trạng thái của cboFilter)
+    // =================================================================
+    private void capNhatDanhSachHienThi(boolean showMessage) {
+        String keyword = txtTimKiem.getText().trim().toLowerCase();
+
+        // Lấy giá trị lọc từ cboFilter và các biến trạng thái
+        String idLoai = "Tất cả";
+        String idHang = "Tất cả";
+        
+        // Kiểm tra null
+        if (cboFilter == null || cboFilter.getSelectedItem() == null) {
+            loadData(); // Tải dữ liệu mặc định nếu combobox chưa sẵn sàng
+            return;
+        }
+        
+        String selected = cboFilter.getSelectedItem().toString();
+
+        // Chỉ lọc khi đang ở màn hình GIÁ TRỊ
+        if (!isShowingCriteria) { 
+            if (currentFilterMode.equals("LOAI")) {
+                // Nếu không phải là "Tất cả" hoặc "Quay lại"
+                if (!selected.equals("Tất cả Loại Giày") && !selected.equals("< Quay lại")) {
+                    idLoai = loaiGiayIdMap.get(selected); // Lấy ID
+                    if (idLoai == null) idLoai = "Tất cả"; // An toàn
+                }
+                // Nếu chọn "Tất cả Loại Giày", idLoai vẫn là "Tất cả" (đúng)
+                
+            } else if (currentFilterMode.equals("HANG")) {
+                 // Nếu không phải là "Tất cả" hoặc "Quay lại"
+                if (!selected.equals("Tất cả Hãng Giày") && !selected.equals("< Quay lại")) {
+                    idHang = hangGiayIdMap.get(selected); // Lấy ID
+                    if (idHang == null) idHang = "Tất cả"; // An toàn
+                }
+                // Nếu chọn "Tất cả Hãng Giày", idHang vẫn là "Tất cả" (đúng)
+            }
+        }
+        // Nếu isShowingCriteria = true (đang ở "Lọc theo..."), 
+        // idLoai và idHang vẫn là "Tất cả" (đúng)
 
         tableModel.setRowCount(0);
         List<Giay> list = giayDAO.getAll();
         int count = 0;
 
         for (Giay g : list) {
-            String id = g.getIdGiay().toLowerCase();
-            String ten = g.getTenGiay().toLowerCase();
-            String tenLoai = loaiGiayMap.getOrDefault(g.getIdLoaiGiay(), g.getIdLoaiGiay());
-            String tenHang = hangGiayMap.getOrDefault(g.getIdHangGiay(), g.getIdHangGiay());
+            // --- Kiểm tra điều kiện lọc ---
+            
+            // 1. Lọc theo Loại
+            boolean locLoaiPhuHop = idLoai.equals("Tất cả") || g.getIdLoaiGiay().equals(idLoai);
+            
+            // 2. Lọc theo Hãng
+            boolean locHangPhuHop = idHang.equals("Tất cả") || g.getIdHangGiay().equals(idHang);
+            
+            // 3. Lọc theo Tìm kiếm (Keyword)
+            boolean timKiemPhuHop = false;
+            if (keyword.isEmpty()) {
+                timKiemPhuHop = true;
+            } else {
+                String id = g.getIdGiay().toLowerCase();
+                String ten = g.getTenGiay().toLowerCase();
+                String tenLoaiDB = loaiGiayMap.getOrDefault(g.getIdLoaiGiay(), g.getIdLoaiGiay()).toLowerCase();
+                String tenHangDB = hangGiayMap.getOrDefault(g.getIdHangGiay(), g.getIdHangGiay()).toLowerCase();
 
-            if (id.contains(keyword) || ten.contains(keyword) || 
-                tenLoai.toLowerCase().contains(keyword) || 
-                tenHang.toLowerCase().contains(keyword)) {
+                if (id.contains(keyword) || ten.contains(keyword) || 
+                    tenLoaiDB.contains(keyword) || tenHangDB.contains(keyword)) {
+                    timKiemPhuHop = true;
+                }
+            }
+
+            // --- Thêm vào bảng nếu thỏa mãn TẤT CẢ ---
+            if (locLoaiPhuHop && locHangPhuHop && timKiemPhuHop) {
+                String tenLoai = loaiGiayMap.getOrDefault(g.getIdLoaiGiay(), g.getIdLoaiGiay());
+                String tenHang = hangGiayMap.getOrDefault(g.getIdHangGiay(), g.getIdHangGiay());
                 
                 ImageIcon imageIcon = loadImageIcon(g.getHinhAnh());
                 
@@ -678,50 +1045,16 @@ public class QuanLyGiay extends JPanel {
         }
 
         // CHỈ hiện thông báo khi showMessage = true (nhấn Enter hoặc nút Tìm)
+        // và không tìm thấy kết quả nào
         if (count == 0 && showMessage) {
-            JOptionPane.showMessageDialog(this, 
-                "Không tìm thấy giày nào khớp với từ khóa: " + keyword,
-                "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-        }
-    }
-    
-    private void locTheoHang() {
-        String selected = (String) cboLocHang.getSelectedItem();
-        
-        if (selected == null || selected.equals("Tất cả")) {
-            loadData();
-            return;
-        }
-        
-        String idHang = hangGiayIdMap.get(selected); 
-        
-        if (idHang == null) {
-            loadData();
-            return;
-        }
-        
-        tableModel.setRowCount(0);
-        List<Giay> list = giayDAO.getAll();
-        
-        for (Giay g : list) {
-            if (g.getIdHangGiay().equals(idHang)) {
-                String tenLoai = loaiGiayMap.getOrDefault(g.getIdLoaiGiay(), g.getIdLoaiGiay());
-                String tenHang = hangGiayMap.getOrDefault(g.getIdHangGiay(), g.getIdHangGiay());
-                
-                ImageIcon imageIcon = loadImageIcon(g.getHinhAnh());
-                
-                tableModel.addRow(new Object[]{
-                    imageIcon,         
-                    g.getIdGiay(),
-                    g.getTenGiay(),
-                    g.getSize(),
-                    g.getSoLuong(),
-                    df.format(g.getGiaBan()) + " đ",
-                    tenLoai,
-                    tenHang,
-                    g.getMoTa(),
-                    g.getStatus()
-                });
+            if (!keyword.isEmpty()) {
+                JOptionPane.showMessageDialog(this, 
+                    "Không tìm thấy giày nào khớp với từ khóa: " + keyword,
+                    "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                 JOptionPane.showMessageDialog(this, 
+                    "Không tìm thấy sản phẩm nào khớp với bộ lọc.",
+                    "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             }
         }
     }
@@ -741,7 +1074,7 @@ public class QuanLyGiay extends JPanel {
 
         Giay g = giayDAO.getById(txtId.getText());
         if (g != null) {
-            // SỬA: Set combobox loại giày theo Tên loại
+            // Set combobox loại giày theo Tên loại
             String tenLoai = loaiGiayMap.getOrDefault(g.getIdLoaiGiay(), g.getIdLoaiGiay());
             cboLoaiGiay.setSelectedItem(tenLoai);
 
@@ -784,7 +1117,17 @@ public class QuanLyGiay extends JPanel {
         txtMoTa.setText("");
         txtTimKiem.setText("");
         cboStatus.setSelectedIndex(0);
-        cboLocHang.setSelectedIndex(0);
+        
+        // SỬA ĐỔI: Reset combobox lọc về trạng thái "CRITERIA" (Tiêu chí)
+        if (cboFilter != null) {
+            loadFilterOptions("CRITERIA");
+        }
+        // (Việc này KHÔNG tự động lọc, vì hàm capNhatDanhSachHienThi
+        // sẽ thấy isShowingCriteria = true và bỏ qua lọc)
+        
+        // Vì vậy, ta phải gọi loadData() để tải lại tất cả
+        loadData(); 
+        
         if (cboLoaiGiay.getItemCount() > 0) cboLoaiGiay.setSelectedIndex(0);
         if (cboHangGiay.getItemCount() > 0) cboHangGiay.setSelectedIndex(0);
         table.clearSelection();
@@ -796,7 +1139,6 @@ public class QuanLyGiay extends JPanel {
         applyPermissions();
         
         txtTen.requestFocus();
-        loadData();
     }
     
     private boolean validateInput() {

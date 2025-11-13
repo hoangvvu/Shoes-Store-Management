@@ -11,6 +11,7 @@ import model.KhachHang;
 import model.ChiTietPhanQuyen; 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Date; // <<< THÊM IMPORT
 import com.toedter.calendar.JDateChooser;
 
 public class QuanLyKhachHang extends JPanel {
@@ -138,6 +139,7 @@ public class QuanLyKhachHang extends JPanel {
         dateNgaySinh = new JDateChooser();
         dateNgaySinh.setDateFormatString("dd/MM/yyyy");
         dateNgaySinh.setPreferredSize(new Dimension(150, 25));
+        dateNgaySinh.setMaxSelectableDate(new Date()); // <<< SỬA: Thêm ràng buộc
         gbc.gridx = 1;
         formPanel.add(dateNgaySinh, gbc);
         

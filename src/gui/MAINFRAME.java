@@ -10,7 +10,7 @@ import java.util.HashMap; // Import HashMap
 import java.util.Map; // Import Map
 import javax.swing.border.Border; // Import để sử dụng Border
 import java.net.URL; // Import để lấy tài nguyên hình ảnh
-import java.io.File; // <<< THÊM DÒNG NÀY
+import java.io.File; 
 
 public class MAINFRAME extends JFrame {
     private NhanVien currentUser;
@@ -307,6 +307,7 @@ public class MAINFRAME extends JFrame {
         menuBar.add(menuManagement); 
     }
 
+    // ========== ĐÂY LÀ PHẦN ĐƯỢC SỬA ==========
     private void handleLogout() {
         int choice = JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc chắn muốn đăng xuất?",
@@ -314,16 +315,19 @@ public class MAINFRAME extends JFrame {
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE);
         if (choice == JOptionPane.YES_OPTION) {
-            this.dispose();
+            this.dispose(); // Đóng MAINFRAME hiện tại
             try {
-                // Giả định class LoginForm tồn tại
-                // new LoginForm().setVisible(true); 
+                // Mở lại form đăng nhập
+                // (Giả định class LoginForm() nằm cùng package 'gui')
+                new LoginForm().setVisible(true); 
             } catch (Exception ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(null, "Lỗi khi mở lại form Đăng nhập: " + ex.getMessage());
             }
         }
     }
+    // ===========================================
+
     private void handleExit() {
         int choice = JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc chắn muốn thoát chương trình?",

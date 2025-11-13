@@ -17,7 +17,7 @@ import com.toedter.calendar.JDateChooser;
 public class QuanLyHoaDon extends JPanel {
     private JTable tableHoaDon, tableChiTiet, tableSanPham;
     private DefaultTableModel modelHoaDon, modelChiTiet, modelSanPham;
-    private JTextField txtIdHD, txtIdNV, txtIdKH, txtTenKH, txtSDT, txtTimKiem, txtSoLuong;
+    private JTextField txtIdHD, txtIdNV, txtIdKH, txtTenKH, txtSDT, txtTimKiem, txtSoLuong,txtTimKiemSP;
     private JLabel lblTongTien, lblThanhToan;
     
     private JButton btnTaoMoi, btnThemSP, btnXoaSP, btnLuuHD, btnHuyHD, btnTraCuuKH, btnLamMoi, btnTimKiem, btnXuatHD, btnXoaHD;
@@ -52,10 +52,22 @@ public class QuanLyHoaDon extends JPanel {
         add(createTitlePanel(), BorderLayout.NORTH);
         add(createMainPanel(), BorderLayout.CENTER);
         
-        loadDanhSachHoaDon();
+        loadDanhSachHoaDon(false);
         loadDanhSachSanPham();
         
         setFormTaoHoaDonEnabled(false);
+        
+        this.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                // Tải lại danh sách sản phẩm để lấy dữ liệu mới nhất
+                // (ví dụ: sau khi thêm ở tab QuanLyGiay)
+                if (txtTimKiemSP != null) {
+                    txtTimKiemSP.setText(""); // Xóa bộ lọc cũ
+                }
+                loadDanhSachSanPham(false);
+            }
+        });
     }
     
     public QuanLyHoaDon(NhanVien user) {
@@ -254,7 +266,6 @@ public class QuanLyHoaDon extends JPanel {
     }
     
     private JPanel createChiTietHDPanel() {
-        // ... (Không thay đổi) ...
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createTitledBorder("Chi tiết hóa đơn"));
@@ -268,28 +279,59 @@ public class QuanLyHoaDon extends JPanel {
         };
         
         tableChiTiet = new JTable(modelChiTiet);
-        tableChiTiet.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        tableChiTiet.setRowHeight(25);
-        tableChiTiet.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
+        // ... (cài đặt tableChiTiet)
         
         JScrollPane scrollPane = new JScrollPane(tableChiTiet);
         scrollPane.setPreferredSize(new Dimension(0, 150));
         panel.add(scrollPane, BorderLayout.CENTER);
         
-        // Nút xóa sản phẩm
+        // ====== Nút điều khiển bên dưới (ĐÃ SỬA) ======
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         btnPanel.setBackground(Color.WHITE);
-        btnXoaSP = createStyledButton("Xóa SP", new Color(231, 76, 60));
+        
+        // Ô nhập tìm kiếm sản phẩm (SỬA: sử dụng biến toàn cục)
+        txtTimKiemSP = new JTextField(12);
+        txtTimKiemSP.setToolTipText("Nhập tên hoặc mã sản phẩm...");
+        
+        // Nút Tìm kiếm sản phẩm
+        JButton btnTimSP = createStyledButton("Tìm sản phẩm", new Color(52, 152, 219));
+        
+        // SỬA: Cập nhật ActionListener (giống QuanLyGiay)
+        btnTimSP.addActionListener(e -> {
+            loadDanhSachSanPham(true); // true = hiển thị thông báo nếu không tìm thấy
+        });
+
+        // SỬA: Thêm KeyAdapter (giống QuanLyGiay)
+        txtTimKiemSP.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    // SỬA LẠI TẠI ĐÂY
+                    loadDanhSachSanPham(true); // Enter: có thông báo
+                } else {
+                    // SỬA LẠI TẠI ĐÂY
+                    loadDanhSachSanPham(false); // Gõ: không thông báo
+                }
+            }
+        });
+        
+        // Nút Xóa SP (cũ)
+        btnXoaSP = createStyledButton("Xóa sản phẩm", new Color(231, 76, 60));
         btnXoaSP.addActionListener(e -> xoaSanPhamKhoiHD());
+        
+        // Thêm vào panel
+        btnPanel.add(new JLabel("Tìm sản phẩm:"));
+        btnPanel.add(txtTimKiemSP);
+        btnPanel.add(btnTimSP);
+        btnPanel.add(Box.createHorizontalStrut(20));
         btnPanel.add(btnXoaSP);
+        
         panel.add(btnPanel, BorderLayout.SOUTH);
         
         return panel;
     }
+
     
-    /**
-     * Sửa: Thêm cột "Tồn kho" (thực tế)
-     */
     private JPanel createSanPhamPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
@@ -326,7 +368,7 @@ public class QuanLyHoaDon extends JPanel {
         txtSoLuong.setText("1");
         btnPanel.add(txtSoLuong);
         
-        btnThemSP = createStyledButton("Thêm vào HĐ", new Color(46, 204, 113));
+        btnThemSP = createStyledButton("Thêm vào hóa đơn", new Color(46, 204, 113));
         btnThemSP.addActionListener(e -> themSanPhamVaoHD());
         btnPanel.add(btnThemSP);
         
@@ -385,7 +427,6 @@ public class QuanLyHoaDon extends JPanel {
     }
     
     private JPanel createDanhSachHoaDonPanel() {
-        // ... (Không thay đổi) ...
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createCompoundBorder(
@@ -409,24 +450,45 @@ public class QuanLyHoaDon extends JPanel {
         searchPanel.add(new JLabel("Trạng thái:"));
         String[] options = {"Tất cả", "Đã thanh toán", "Chờ thanh toán"};
         cboLocTrangThai = new JComboBox<>(options);
-        cboLocTrangThai.addActionListener(e -> loadDanhSachHoaDon());
+        // SỬA: Gọi với showMessage = false
+        cboLocTrangThai.addActionListener(e -> loadDanhSachHoaDon(false)); 
         searchPanel.add(cboLocTrangThai);
         
         // Tìm kiếm
         searchPanel.add(new JLabel("Tìm kiếm:"));
         txtTimKiem = new JTextField(15);
         searchPanel.add(txtTimKiem);
+        
+        // === THÊM MỚI: KEYLISTENER (Giống QuanLyGiay) ===
+        txtTimKiem.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    loadDanhSachHoaDon(true); // Enter: có thông báo
+                } else {
+                    loadDanhSachHoaDon(false); // Gõ: không thông báo
+                }
+            }
+        });
+        // ================================================
+        
         btnTimKiem = createStyledButton("Tìm", new Color(52, 152, 219));
         btnTimKiem.setPreferredSize(new Dimension(80, 28));
-        btnTimKiem.addActionListener(e -> loadDanhSachHoaDon()); 
+        // SỬA: Gọi với showMessage = true
+        btnTimKiem.addActionListener(e -> loadDanhSachHoaDon(true)); 
         searchPanel.add(btnTimKiem);
         
         btnLamMoi = createStyledButton("Làm mới", new Color(149, 165, 166));
-        btnLamMoi.setPreferredSize(new Dimension(80, 28));
+        
+        // ========== SỬA LỖI TẠI ĐÂY ==========
+        // Tăng chiều rộng từ 80 lên 100
+        btnLamMoi.setPreferredSize(new Dimension(100, 28)); 
+        // ======================================
+        
         btnLamMoi.addActionListener(e -> {
             cboLocTrangThai.setSelectedIndex(0); 
             txtTimKiem.setText("");
-            loadDanhSachHoaDon(); 
+            loadDanhSachHoaDon(false); // SỬA: Gọi với showMessage = false
         });
         searchPanel.add(btnLamMoi);
         
@@ -546,6 +608,12 @@ public class QuanLyHoaDon extends JPanel {
         tongTienHD = 0;
         updateTongTien();
         
+        if (txtTimKiemSP != null) {
+            txtTimKiemSP.setText(""); 
+        }
+        
+        loadDanhSachSanPham(false);
+        
         // Kích hoạt form
         setFormTaoHoaDonEnabled(true);
         txtSDT.requestFocus();
@@ -580,6 +648,14 @@ public class QuanLyHoaDon extends JPanel {
         if (sdt.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng nhập SĐT khách hàng!",
                 "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        if (!sdt.matches("\\d{10}")) {
+            JOptionPane.showMessageDialog(this, 
+                "Số điện thoại phải có 10 chữ số!", 
+                "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            txtSDT.requestFocus();
             return;
         }
         
@@ -634,6 +710,9 @@ public class QuanLyHoaDon extends JPanel {
         JDateChooser dateNgaySinh = new JDateChooser();
         dateNgaySinh.setDateFormatString("dd/MM/yyyy");
         dateNgaySinh.setPreferredSize(new Dimension(150, 25));
+        
+        dateNgaySinh.setMaxSelectableDate(new Date());
+        
         gbc.gridx = 1; gbc.gridy = 2;
         panel.add(dateNgaySinh, gbc);
 
@@ -716,9 +795,6 @@ public class QuanLyHoaDon extends JPanel {
         return null; // Người dùng nhấn Cancel
     }
     
-    /**
-     * Sửa: Cập nhật chỉ số cột sau khi thêm cột Tồn kho.
-     */
     private void themSanPhamVaoHD() {
         if (currentHoaDonId.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng tạo hóa đơn mới trước!",
@@ -867,7 +943,7 @@ public class QuanLyHoaDon extends JPanel {
                 
                 JOptionPane.showMessageDialog(this, 
                     "Lưu hóa đơn tạm thành công!\nMã hóa đơn: " + currentHoaDonId + 
-                    "\nTrạng thái: Chờ thanh toán\n(Chưa trừ tồn kho)",
+                    "\nTrạng thái: Chờ thanh toán",
                     "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 
                 // Reset form
@@ -883,7 +959,7 @@ public class QuanLyHoaDon extends JPanel {
                 // Vô hiệu hóa form sau khi lưu
                 setFormTaoHoaDonEnabled(false);
                 
-                loadDanhSachHoaDon();
+                loadDanhSachHoaDon(false);
                 // Tải lại DS SP để cập nhật số Khả Dụng (số tạm giữ tăng)
                 loadDanhSachSanPham();
             }
@@ -994,12 +1070,12 @@ public class QuanLyHoaDon extends JPanel {
                 if (hoaDonDAO.update(hd)) {
                     hienThiHoaDonXuat(idHD); 
                     
-                    loadDanhSachHoaDon(); 
+                    loadDanhSachHoaDon(false); 
                     // Tải lại để cập nhật số Khả Dụng (cả Tồn kho và Tạm giữ đều giảm)
                     loadDanhSachSanPham(); 
                     
                     JOptionPane.showMessageDialog(this, 
-                        "Xác nhận thanh toán thành công!\n✓ Đã cập nhật tồn kho.\n✓ Đã cập nhật tổng chi tiêu KH.",
+                        "Xác nhận thanh toán thành công!.",
                         "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 } else {
                     JOptionPane.showMessageDialog(this, "Lỗi cập nhật trạng thái hóa đơn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -1052,7 +1128,7 @@ public class QuanLyHoaDon extends JPanel {
                 if (hoaDonDeleted) {
                     JOptionPane.showMessageDialog(this, "Đã xóa thành công hóa đơn " + idHD + ".",
                         "Thành công", JOptionPane.INFORMATION_MESSAGE);
-                    loadDanhSachHoaDon(); // Tải lại bảng
+                    loadDanhSachHoaDon(false); // Tải lại bảng
                     // Tải lại DS SP để hoàn lại số Khả Dụng (số tạm giữ giảm)
                     loadDanhSachSanPham();
                 } else {
@@ -1134,11 +1210,6 @@ public class QuanLyHoaDon extends JPanel {
     }
 
     
-    /**
-     * Lấy một Map chứa tổng số lượng đang "tạm giữ" của TẤT CẢ sản phẩm
-     * trong các hóa đơn có trạng thái "Chờ thanh toán".
-     * @return Map<String, Integer> với Key=IdGiay, Value=Tổng số lượng tạm giữ
-     */
     private Map<String, Integer> getTatCaSoLuongTamGiu() {
         Map<String, Integer> tamGiuMap = new HashMap<>();
         
@@ -1167,8 +1238,7 @@ public class QuanLyHoaDon extends JPanel {
         return tamGiuMap;
     }
     
-    private void loadDanhSachHoaDon() {
-        // ... (Không thay đổi) ...
+    private void loadDanhSachHoaDon(boolean showMessage) {
         modelHoaDon.setRowCount(0);
         
         // Lấy giá trị từ các bộ lọc
@@ -1179,6 +1249,7 @@ public class QuanLyHoaDon extends JPanel {
         String keyword = txtTimKiem.getText().trim().toLowerCase();
         
         List<HoaDon> list = hoaDonDAO.getAll();
+        int count = 0; // THÊM: Biến đếm kết quả
         
         for (HoaDon hd : list) {
             // Lọc theo trạng thái
@@ -1217,42 +1288,84 @@ public class QuanLyHoaDon extends JPanel {
                     df.format(hd.getTongTien()) + " đ",
                     hd.getStatus()
                 });
+                count++; // THÊM: Tăng biến đếm
             }
         }
+        
+        // THÊM: Hiển thị thông báo nếu không tìm thấy (giống QuanLyGiay)
+        if (count == 0 && showMessage && !keyword.isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "Không tìm thấy hóa đơn nào khớp với từ khóa: " + txtTimKiem.getText().trim(),
+                "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        }
     }
-    
-    /**
-     * Sửa: Thêm cột Tồn kho (thực tế) vào bảng.
-     */
-    private void loadDanhSachSanPham() {
+
+    private void loadDanhSachSanPham(boolean showMessage) {
         modelSanPham.setRowCount(0);
         
+        // Lấy từ khóa từ ô tìm kiếm (biến toàn cục)
+        String keyword = "";
+        if (txtTimKiemSP != null) { // Kiểm tra null phòng trường hợp hàm được gọi trước khi createChiTietHDPanel
+            keyword = txtTimKiemSP.getText().trim().toLowerCase();
+        }
+
         // Lấy map số lượng đang tạm giữ
         Map<String, Integer> tamGiuMap = getTatCaSoLuongTamGiu();
         
         List<Giay> list = giayDAO.getAll();
+        int count = 0; // Biến đếm kết quả
         
         for (Giay g : list) {
             // LOGIC
-            int tonKho = g.getSoLuong(); // Tổng tồn thực tế
-            int tamGiu = tamGiuMap.getOrDefault(g.getIdGiay(), 0); // Đang giữ ở HĐ chờ
-            int khaDung = tonKho - tamGiu; // Số lượng có thể bán
+            int tonKho = g.getSoLuong(); 
+            int tamGiu = tamGiuMap.getOrDefault(g.getIdGiay(), 0); 
+            int khaDung = tonKho - tamGiu; 
             
-            // Chỉ hiển thị nếu "Khả dụng" > 0
-            if ((g.getStatus().equalsIgnoreCase("Hoạt động")) 
-                && khaDung > 0) { 
+            // === PHẦN CẦN SỬA ĐỔI ===
+            // Điều kiện cũ: if ((g.getStatus().equalsIgnoreCase("Hoạt động")) && khaDung > 0) 
+            
+            // Sửa đổi: Chỉ cần trạng thái Hoạt động. 
+            // Nếu KhaDung = 0, nó vẫn cho phép hiển thị để người dùng biết là SP này TẠM HẾT hoặc VỪA MỚI TẠO.
+            if (g.getStatus().equalsIgnoreCase("Hoạt động")) { 
+            // =========================
                 
-                // === ĐÃ SỬA: Thêm tonKho vào trước khaDung ===
-                modelSanPham.addRow(new Object[]{
-                    g.getIdGiay(),
-                    g.getTenGiay(),
-                    g.getSize(),
-                    df.format(g.getGiaBan()) + " đ",
-                    tonKho, // <-- MỚI: Cột Tồn kho thực tế
-                    khaDung // <-- Cột Khả dụng
-                });
+                // === LOGIC LỌC TỪ KHÓA (GIỮ NGUYÊN) ===
+                boolean keywordMatch = false;
+                if (keyword.isEmpty()) {
+                    keywordMatch = true; 
+                } else {
+                    String ma = g.getIdGiay().toLowerCase();
+                    String ten = g.getTenGiay().toLowerCase();
+                    if (ma.contains(keyword) || ten.contains(keyword)) {
+                        keywordMatch = true;
+                    }
+                }
+                // =================================
+                
+                if (keywordMatch) {
+                    modelSanPham.addRow(new Object[]{
+                        g.getIdGiay(),
+                        g.getTenGiay(),
+                        g.getSize(),
+                        df.format(g.getGiaBan()) + " đ",
+                        tonKho, // [Hiển thị tồn kho]
+                        khaDung // [Hiển thị khả dụng]
+                    });
+                    count++; 
+                }
             }
         }
+        
+        // === HIỂN THỊ THÔNG BÁO (MỚI - Giống QuanLyGiay) ===
+        if (count == 0 && showMessage && !keyword.isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "Không tìm thấy sản phẩm nào khớp với từ khóa: " + txtTimKiemSP.getText().trim(),
+                "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+    
+    private void loadDanhSachSanPham() {
+        loadDanhSachSanPham(false); // Gọi hàm chính với showMessage = false
     }
     
     private void xemChiTietHoaDon(int row) {

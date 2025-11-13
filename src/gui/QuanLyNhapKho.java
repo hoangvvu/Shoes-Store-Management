@@ -3,12 +3,13 @@ package gui;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.*;
+// SỬA ĐỔI: Đảm bảo có KeyAdapter và KeyEvent (mặc dù java.awt.event.* đã bao gồm)
+import java.awt.event.*; 
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import javax.swing.border.Border; // <<< CẦN THIẾT CHO VIỆC TÂN TRANG UI
+import javax.swing.border.Border; 
 import DAO.*;
 import model.*;
 
@@ -16,8 +17,8 @@ public class QuanLyNhapKho extends JPanel {
     private JTable tableNhapKho, tableChiTiet, tableSanPham;
     private DefaultTableModel modelNhapKho, modelChiTiet, modelSanPham;
     
-    // === ĐÃ SỬA: Thay đổi biến quản lý NCC (Xóa txtIdNCC, txtTenNCC) ===
-    private JTextField txtIdNK, txtIdNV, txtTimKiem, txtSoLuong, txtGiaNhap; 
+    // SỬA ĐỔI: Thêm txtTimKiemSP
+    private JTextField txtIdNK, txtIdNV, txtTimKiem, txtSoLuong, txtGiaNhap, txtTimKiemSP; 
     private JLabel lblTongTien;
     
     // Nút đã sửa đổi và chuyển lên Header
@@ -54,11 +55,26 @@ public class QuanLyNhapKho extends JPanel {
         add(createTitlePanel(), BorderLayout.NORTH);
         add(createMainPanel(), BorderLayout.CENTER);
         
-        loadDanhSachNhapKho();
-        loadDanhSachSanPham();
+        // SỬA ĐỔI: Gọi hàm (boolean) mới
+        loadDanhSachNhapKho(false);
+        loadDanhSachSanPham(false);
         loadComboBoxNCC(); 
         
         setFormTaoNKEnabled(false);
+        
+        this.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                // Tải lại danh sách sản phẩm để lấy dữ liệu mới nhất
+                // (ví dụ: sau khi thêm ở tab QuanLyGiay)
+                
+                // SỬA ĐỔI: Thêm reset ô tìm kiếm (Giống QuanLyHoaDon)
+                if (txtTimKiemSP != null) {
+                    txtTimKiemSP.setText("");
+                }
+                loadDanhSachSanPham(false); // SỬA ĐỔI: Gọi hàm (boolean) mới
+            }
+        });
     }
     
     public QuanLyNhapKho(NhanVien user) {
@@ -253,6 +269,7 @@ public class QuanLyNhapKho extends JPanel {
         return panel;
     }
     
+    // SỬA ĐỔI: Thêm ô tìm kiếm sản phẩm
     private JPanel createChiTietNKPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
@@ -275,12 +292,47 @@ public class QuanLyNhapKho extends JPanel {
         scrollPane.setPreferredSize(new Dimension(0, 150));
         panel.add(scrollPane, BorderLayout.CENTER);
         
+        // === SỬA ĐỔI: Thêm ô tìm kiếm sản phẩm (Giống QuanLyHoaDon) ===
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         btnPanel.setBackground(Color.WHITE);
-        btnXoaSP = createStyledButton("Xóa SP", new Color(231, 76, 60));
+        
+        // Ô nhập tìm kiếm sản phẩm
+        txtTimKiemSP = new JTextField(12);
+        txtTimKiemSP.setToolTipText("Nhập tên hoặc mã sản phẩm...");
+        
+        // Nút Tìm kiếm sản phẩm
+        JButton btnTimSP = createStyledButton("Tìm sản phẩm", new Color(52, 152, 219));
+        
+        // SỬA: Cập nhật ActionListener (giống QuanLyHoaDon)
+        btnTimSP.addActionListener(e -> {
+            loadDanhSachSanPham(true); // true = hiển thị thông báo nếu không tìm thấy
+        });
+
+        // SỬA: Thêm KeyAdapter (giống QuanLyHoaDon)
+        txtTimKiemSP.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    loadDanhSachSanPham(true); // Enter: có thông báo
+                } else {
+                    loadDanhSachSanPham(false); // Gõ: không thông báo
+                }
+            }
+        });
+        
+        // Nút Xóa SP (cũ)
+        btnXoaSP = createStyledButton("Xóa sản phẩm", new Color(231, 76, 60));
         btnXoaSP.addActionListener(e -> xoaSanPhamKhoiNK());
+        
+        // Thêm vào panel
+        btnPanel.add(new JLabel("Tìm sản phẩm:"));
+        btnPanel.add(txtTimKiemSP);
+        btnPanel.add(btnTimSP);
+        btnPanel.add(Box.createHorizontalStrut(20)); // Thêm khoảng cách
         btnPanel.add(btnXoaSP);
+        
         panel.add(btnPanel, BorderLayout.SOUTH);
+        // === KẾT THÚC SỬA ĐỔI ===
         
         return panel;
     }
@@ -326,7 +378,7 @@ public class QuanLyNhapKho extends JPanel {
         JPanel buttonLine = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
         buttonLine.setBackground(Color.WHITE);
         
-        btnThemSP = createStyledButton("Thêm vào NK", new Color(39, 174, 96));
+        btnThemSP = createStyledButton("Thêm vào nhập kho", new Color(39, 174, 96));
         btnThemSP.addActionListener(e -> themSanPhamVaoNK());
         buttonLine.add(btnThemSP);
         
@@ -376,6 +428,7 @@ public class QuanLyNhapKho extends JPanel {
         return panel;
     }
     
+    // SỬA ĐỔI: Cập nhật logic tìm kiếm
     private JPanel createDanhSachNhapKhoPanel() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBackground(Color.WHITE);
@@ -397,23 +450,40 @@ public class QuanLyNhapKho extends JPanel {
         searchPanel.add(new JLabel("Trạng thái:"));
         String[] options = {"Tất cả", "Đã xác nhận", "Chờ xác nhận"};
         cboLocTrangThai = new JComboBox<>(options);
-        cboLocTrangThai.addActionListener(e -> loadDanhSachNhapKho()); 
+        // SỬA ĐỔI: Gọi hàm (boolean) mới
+        cboLocTrangThai.addActionListener(e -> loadDanhSachNhapKho(false)); 
         searchPanel.add(cboLocTrangThai);
         
         searchPanel.add(new JLabel("Tìm kiếm:"));
         txtTimKiem = new JTextField(15);
         searchPanel.add(txtTimKiem);
+        
+        // === THÊM MỚI: KEYLISTENER (Giống QuanLyHoaDon) ===
+        txtTimKiem.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    loadDanhSachNhapKho(true); // Enter: có thông báo
+                } else {
+                    loadDanhSachNhapKho(false); // Gõ: không thông báo
+                }
+            }
+        });
+        // ================================================
+        
         btnTimKiem = createStyledButton("Tìm", new Color(52, 152, 219));
         btnTimKiem.setPreferredSize(new Dimension(80, 28));
-        btnTimKiem.addActionListener(e -> loadDanhSachNhapKho());
+        // SỬA ĐỔI: Gọi hàm (boolean) mới
+        btnTimKiem.addActionListener(e -> loadDanhSachNhapKho(true));
         searchPanel.add(btnTimKiem);
         
         btnLamMoi = createStyledButton("Làm mới", new Color(149, 165, 166));
-        btnLamMoi.setPreferredSize(new Dimension(80, 28));
+        // SỬA ĐỔI: Cập nhật kích thước nút
+        btnLamMoi.setPreferredSize(new Dimension(100, 28));
         btnLamMoi.addActionListener(e -> {
             cboLocTrangThai.setSelectedIndex(0); 
             txtTimKiem.setText(""); 
-            loadDanhSachNhapKho(); 
+            loadDanhSachNhapKho(false); // SỬA ĐỔI: Gọi hàm (boolean) mới
         });
         searchPanel.add(btnLamMoi);
         
@@ -508,6 +578,7 @@ public class QuanLyNhapKho extends JPanel {
         return btn;
     }
     
+    // SỬA ĐỔI: Thêm reset txtTimKiemSP
     private void taoPhieuNhapKhoMoi() {
         currentNhapKhoId = generateNextNhapKhoId();
         txtIdNK.setText(currentNhapKhoId);
@@ -523,6 +594,13 @@ public class QuanLyNhapKho extends JPanel {
         modelChiTiet.setRowCount(0);
         tongTienNK = 0;
         updateTongTien();
+        
+        // THÊM MỚI: Clear bộ lọc SP (Giống QuanLyHoaDon)
+        if (txtTimKiemSP != null) {
+            txtTimKiemSP.setText(""); 
+        }
+        
+        loadDanhSachSanPham(false); // SỬA ĐỔI: Gọi hàm (boolean) mới
         
         setFormTaoNKEnabled(true);
         cboNhaCungCap.requestFocus(); 
@@ -846,7 +924,7 @@ public class QuanLyNhapKho extends JPanel {
                 
                 JOptionPane.showMessageDialog(this, 
                     "Lưu phiếu nhập kho tạm thành công!\nMã phiếu: " + currentNhapKhoId + 
-                    "\nTrạng thái: Chờ xác nhận\n(Chưa cập nhật tồn kho)",
+                    "\nTrạng thái: Chờ xác nhận",
                     "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 
                 // Reset form
@@ -858,7 +936,7 @@ public class QuanLyNhapKho extends JPanel {
                 updateTongTien();
                 
                 setFormTaoNKEnabled(false);
-                loadDanhSachNhapKho();
+                loadDanhSachNhapKho(false); // SỬA ĐỔI
             } else {
                  JOptionPane.showMessageDialog(this, "Lỗi khi lưu phiếu nhập kho!",
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -944,11 +1022,11 @@ public class QuanLyNhapKho extends JPanel {
                 nk.setStatus("Đã xác nhận");
                 if (nhapKhoDAO.update(nk)) {
                     JOptionPane.showMessageDialog(this, 
-                        "Xác nhận nhập kho thành công!\n✓ Đã cập nhật tồn kho.",
+                    "Xác nhận nhập kho thành công!",
                         "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     
-                    loadDanhSachNhapKho(); 
-                    loadDanhSachSanPham(); 
+                    loadDanhSachNhapKho(false); // SỬA ĐỔI
+                    loadDanhSachSanPham(false); // SỬA ĐỔI
                 } else {
                     JOptionPane.showMessageDialog(this, "Lỗi cập nhật trạng thái phiếu nhập!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
@@ -994,7 +1072,7 @@ public class QuanLyNhapKho extends JPanel {
                 if (nhapKhoDeleted) {
                     JOptionPane.showMessageDialog(this, "Đã xóa thành công phiếu nhập kho " + idNK + ".",
                         "Thành công", JOptionPane.INFORMATION_MESSAGE);
-                    loadDanhSachNhapKho(); 
+                    loadDanhSachNhapKho(false); // SỬA ĐỔI
                 } else {
                     JOptionPane.showMessageDialog(this, "Lỗi khi xóa phiếu nhập kho.", "Lỗi DAO", JOptionPane.ERROR_MESSAGE);
                 }
@@ -1008,7 +1086,13 @@ public class QuanLyNhapKho extends JPanel {
         }
     }
     
-    private void loadDanhSachNhapKho() {
+    // === SỬA ĐỔI: Thay thế hàm loadDanhSachNhapKho() cũ ===
+    
+    /**
+     * SỬA ĐỔI: Tải danh sách có logic thông báo (Giống QuanLyHoaDon)
+     * @param showMessage Hiển thị thông báo nếu không tìm thấy
+     */
+    private void loadDanhSachNhapKho(boolean showMessage) {
         modelNhapKho.setRowCount(0);
         
         String statusFilter = "Tất cả";
@@ -1018,6 +1102,7 @@ public class QuanLyNhapKho extends JPanel {
         String keyword = txtTimKiem.getText().trim().toLowerCase();
         
         List<NhapKho> list = nhapKhoDAO.getAll();
+        int count = 0; // THÊM MỚI: Biến đếm
         
         for (NhapKho nk : list) {
             boolean statusMatch = false;
@@ -1053,24 +1138,85 @@ public class QuanLyNhapKho extends JPanel {
                     df.format(nk.getTongTien()) + " đ",
                     nk.getStatus()
                 });
+                count++; // THÊM MỚI: Tăng biến đếm
             }
+        }
+        
+        // THÊM MỚI: Hiển thị thông báo (Giống QuanLyHoaDon)
+        if (count == 0 && showMessage && !keyword.isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "Không tìm thấy phiếu nhập nào khớp với từ khóa: " + txtTimKiem.getText().trim(),
+                "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    /**
+     * THÊM MỚI: Phương thức tải mặc định (không thông báo)
+     */
+    private void loadDanhSachNhapKho() {
+        loadDanhSachNhapKho(false);
+    }
+    
+    // === SỬA ĐỔI: Thay thế hàm loadDanhSachSanPham() cũ ===
+
+    /**
+     * SỬA ĐỔI: Tải danh sách sản phẩm có lọc và thông báo
+     * (Giống QuanLyHoaDon, nhưng không có logic tồn kho/khả dụng)
+     * @param showMessage Hiển thị thông báo nếu không tìm thấy
+     */
+    private void loadDanhSachSanPham(boolean showMessage) {
+        modelSanPham.setRowCount(0);
+        
+        // Lấy từ khóa từ ô tìm kiếm (biến toàn cục)
+        String keyword = "";
+        if (txtTimKiemSP != null) { 
+            keyword = txtTimKiemSP.getText().trim().toLowerCase();
+        }
+
+        List<Giay> list = giayDAO.getAll();
+        int count = 0; // Biến đếm kết quả
+        
+        for (Giay g : list) {
+            // Chỉ hiển thị sản phẩm "Hoạt động"
+            if (g.getStatus().equalsIgnoreCase("Hoạt động")) { 
+                
+                // LOGIC LỌC TỪ KHÓA (Giống QuanLyHoaDon)
+                boolean keywordMatch = false;
+                if (keyword.isEmpty()) {
+                    keywordMatch = true; // Rỗng thì luôn khớp
+                } else {
+                    String ma = g.getIdGiay().toLowerCase();
+                    String ten = g.getTenGiay().toLowerCase();
+                    if (ma.contains(keyword) || ten.contains(keyword)) {
+                        keywordMatch = true;
+                    }
+                }
+                
+                if (keywordMatch) {
+                    modelSanPham.addRow(new Object[]{
+                        g.getIdGiay(),
+                        g.getTenGiay(),
+                        g.getSize(),
+                        g.getSoLuong() // Cột Tồn kho
+                    });
+                    count++; 
+                }
+            }
+        }
+        
+        // HIỂN THỊ THÔNG BÁO (Giống QuanLyHoaDon)
+        if (count == 0 && showMessage && !keyword.isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "Không tìm thấy sản phẩm nào khớp với từ khóa: " + txtTimKiemSP.getText().trim(),
+                "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         }
     }
     
+    /**
+     * THÊM MỚI: Phương thức tải mặc định (không thông báo)
+     */
     private void loadDanhSachSanPham() {
-        modelSanPham.setRowCount(0);
-        List<Giay> list = giayDAO.getAll();
-        
-        for (Giay g : list) {
-            if (g.getStatus().equalsIgnoreCase("Hoạt động")) {
-                modelSanPham.addRow(new Object[]{
-                    g.getIdGiay(),
-                    g.getTenGiay(),
-                    g.getSize(),
-                    g.getSoLuong()
-                });
-            }
-        }
+        loadDanhSachSanPham(false); // Gọi hàm chính với showMessage = false
     }
     
     private void xemChiTietNhapKho(int row) {
