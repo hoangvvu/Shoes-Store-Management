@@ -608,6 +608,14 @@ public class QuanLyNhanVien extends JPanel {
         }
     }
     
+    // =================================================================
+    // ========== SỬA VỊ TRÍ THEO YÊU CẦU CỦA BẠN ==========
+    // =================================================================
+    
+    /**
+     * Sửa: Phương thức này giờ là "Đặt lại mật khẩu" (cho Admin)
+     * Không yêu cầu mật khẩu cũ, chỉ yêu cầu mật khẩu mới và xác nhận.
+     */
     private void doiMatKhau() {
         int row = table.getSelectedRow();
         if (row == -1) {
@@ -616,26 +624,33 @@ public class QuanLyNhanVien extends JPanel {
             return;
         }
         
-        JPasswordField oldPass = new JPasswordField();
+        // Lấy thông tin nhân viên đã chọn từ form
+        String idNV = txtId.getText().trim();
+        String tenNV = txtTen.getText().trim();
+
+        // Tạo các trường nhập mật khẩu
         JPasswordField newPass = new JPasswordField();
         JPasswordField confirmPass = new JPasswordField();
         
+        // Tạo nội dung cho dialog
+        // Không còn hỏi mật khẩu cũ
         Object[] message = {
-            "Mật khẩu cũ:", oldPass,
+            "Bạn đang đặt lại mật khẩu cho: " + tenNV + " (ID: " + idNV + ")",
             "Mật khẩu mới:", newPass,
             "Xác nhận mật khẩu:", confirmPass
         };
         
-        int option = JOptionPane.showConfirmDialog(this, message, "Đổi Mật Khẩu", 
+        // Hiển thị dialog
+        int option = JOptionPane.showConfirmDialog(this, message, "Đặt Lại Mật Khẩu (Admin)", 
             JOptionPane.OK_CANCEL_OPTION);
         
         if (option == JOptionPane.OK_OPTION) {
-            String oldPassword = new String(oldPass.getPassword());
             String newPassword = new String(newPass.getPassword());
             String confirmPassword = new String(confirmPass.getPassword());
             
-            if (oldPassword.isEmpty() || newPassword.isEmpty() || confirmPassword.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!", 
+            // Validate (không cần mật khẩu cũ)
+            if (newPassword.isEmpty() || confirmPassword.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ mật khẩu mới và xác nhận!", 
                     "Cảnh báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -652,24 +667,34 @@ public class QuanLyNhanVien extends JPanel {
                 return;
             }
             
-            NhanVien nv = nhanVienDAO.getById(txtId.getText().trim());
-            if (nv == null || !nv.getPassword().equals(oldPassword)) {
-                JOptionPane.showMessageDialog(this, "Mật khẩu cũ không đúng!", 
+            // Lấy đối tượng nhân viên từ CSDL
+            NhanVien nv = nhanVienDAO.getById(idNV);
+            
+            // Kiểm tra xem nhân viên có tồn tại không
+            if (nv == null) {
+                 JOptionPane.showMessageDialog(this, "Không tìm thấy nhân viên với ID: " + idNV, 
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             
+            // Cập nhật mật khẩu mới cho đối tượng
             nv.setPassword(newPassword);
+            
+            // Gọi DAO để cập nhật
             if (nhanVienDAO.update(nv)) {
-                JOptionPane.showMessageDialog(this, "Đổi mật khẩu thành công!", 
+                JOptionPane.showMessageDialog(this, "Đặt lại mật khẩu thành công cho " + tenNV + "!", 
                     "Thành công", JOptionPane.INFORMATION_MESSAGE);
-                lamMoi();
+                lamMoi(); // Làm mới form
             } else {
-                JOptionPane.showMessageDialog(this, "Đổi mật khẩu thất bại!", 
+                JOptionPane.showMessageDialog(this, "Đặt lại mật khẩu thất bại!", 
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
+    
+    // =================================================================
+    // ========== KẾT THÚC VỊ TRÍ SỬA ==========
+    // =================================================================
     
     // =========================================================================
     // PHẦN QUẢN LÝ PHÂN QUYỀN

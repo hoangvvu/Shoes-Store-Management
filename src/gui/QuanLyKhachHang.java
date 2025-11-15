@@ -7,6 +7,8 @@ import java.awt.event.*;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import DAO.DAO_KhachHang;
+import DAO.DAO_HoaDon; // === THÊM MỚI IMPORT ===
+import model.HoaDon; // === THÊM MỚI IMPORT ===
 import model.KhachHang;
 import model.ChiTietPhanQuyen; 
 import java.util.List;
@@ -20,7 +22,7 @@ public class QuanLyKhachHang extends JPanel {
     private JTextField txtId, txtTen, txtSdt, txtDiaChi, txtTongTien, txtTimKiem;
     private JDateChooser dateNgaySinh;
     private JComboBox<String> cboStatus, cboGioiTinh;
-    private JButton btnThem, btnSua, btnLamMoi, btnTraCuu;
+    private JButton btnThem, btnSua, btnLamMoi, btnTraCuu, btnXemLichSu; // === THÊM MỚI btnXemLichSu ===
     private DAO_KhachHang khachHangDAO;
     private DecimalFormat df = new DecimalFormat("#,###");
     private SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
@@ -56,6 +58,9 @@ public class QuanLyKhachHang extends JPanel {
             btnThem.setEnabled(false);
             btnSua.setEnabled(false);
         }
+        
+        // === THÊM MỚI: Tắt nút Lịch sử mặc định ===
+        btnXemLichSu.setEnabled(false); 
     }
     
     private JPanel createTitlePanel() {
@@ -188,7 +193,8 @@ public class QuanLyKhachHang extends JPanel {
     }
     
     private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new GridLayout(1, 3, 10, 10));
+        // === SỬA ĐỔI: Chuyển layout thành 2x2 ===
+        JPanel panel = new JPanel(new GridLayout(2, 2, 10, 10));
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 0));
         
@@ -196,13 +202,20 @@ public class QuanLyKhachHang extends JPanel {
         btnSua = createStyledButton("Sửa", new Color(52, 152, 219));
         btnLamMoi = createStyledButton("Làm mới", new Color(149, 165, 166));
         
+        // === THÊM MỚI: Nút Xem Lịch Sử ===
+        btnXemLichSu = createStyledButton("Lịch sử giao dịch", new Color(155, 89, 182));
+        
         panel.add(btnThem);
         panel.add(btnSua);
         panel.add(btnLamMoi);
+        panel.add(btnXemLichSu); // Thêm nút mới vào panel
         
         btnThem.addActionListener(e -> themKhachHang());
         btnSua.addActionListener(e -> suaKhachHang());
         btnLamMoi.addActionListener(e -> lamMoi());
+        
+        // === THÊM MỚI: Action cho nút Lịch Sử ===
+        btnXemLichSu.addActionListener(e -> xemLichSuMuaHang());
         
         return panel;
     }
@@ -494,6 +507,9 @@ public class QuanLyKhachHang extends JPanel {
             txtTongTien.setText(String.valueOf((int)kh.getTongTien()));
             cboStatus.setSelectedItem(kh.getStatus());
             table.setRowSelectionInterval(0, 0);
+            
+            // === THÊM MỚI: Kích hoạt nút khi tìm thấy 1 ===
+            btnXemLichSu.setEnabled(true);
         }
     }
     
@@ -537,6 +553,9 @@ public class QuanLyKhachHang extends JPanel {
         if (permission != null) {
             btnSua.setEnabled(permission.isDuocSua());
         }
+        
+        // === THÊM MỚI: Kích hoạt nút Lịch sử ===
+        btnXemLichSu.setEnabled(true);
     }
     
     private void lamMoi() {
@@ -553,7 +572,7 @@ public class QuanLyKhachHang extends JPanel {
         txtTen.requestFocus();
         loadData();
         
-        applyPermissions();
+        applyPermissions(); // Đã bao gồm setEnabled(false) cho btnXemLichSu
     }
     
     private boolean validateInput() {
@@ -592,4 +611,230 @@ public class QuanLyKhachHang extends JPanel {
         
         return true;
     }
+    
+    // === THÊM MỚI: HÀM XỬ LÝ NÚT XEM LỊCH SỬ ===
+    private void xemLichSuMuaHang() {
+        String idKH = txtId.getText();
+        String tenKH = txtTen.getText();
+        
+        if (idKH.isEmpty() || tenKH.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một khách hàng từ bảng.", 
+                "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Tạo và hiển thị dialog
+        LichSuMuaHangDialog dialog = new LichSuMuaHangDialog(
+            (JFrame) SwingUtilities.getWindowAncestor(this), 
+            idKH, 
+            tenKH
+        );
+        dialog.setVisible(true);
+    }
+    
+    
+    // =========================================================================
+    // === THÊM MỚI: LỚP INNER CLASS CHO DIALOG LỊCH SỬ MUA HÀNG ===
+    // =========================================================================
+    
+    class LichSuMuaHangDialog extends JDialog {
+        private JTable tableLichSu;
+        private DefaultTableModel modelLichSu;
+        private JDateChooser dateTuNgay, dateDenNgay;
+        private JButton btnLoc;
+        private JLabel lblTongChiTieu;
+        private String idKH;
+        private DAO_HoaDon hoaDonDAO_Dialog; // DAO để truy vấn Hóa Đơn
+        
+        // Định dạng
+        private DecimalFormat df_Dialog = new DecimalFormat("#,###");
+        private SimpleDateFormat sdf_Dialog = new SimpleDateFormat("dd/MM/yyyy");
+            
+        public LichSuMuaHangDialog(JFrame parent, String idKH, String tenKH) {
+            super(parent, "Lịch Sử Mua Hàng: " + tenKH + " (" + idKH + ")", true); // true = modal
+            this.idKH = idKH;
+            this.hoaDonDAO_Dialog = new DAO_HoaDon(); // Khởi tạo DAO
+            
+            setSize(800, 600);
+            setLocationRelativeTo(parent);
+            setLayout(new BorderLayout(10, 10));
+            
+            // 1. Filter Panel (NORTH)
+            add(createFilterPanel_Dialog(), BorderLayout.NORTH);
+            
+            // 2. Table (CENTER)
+            add(createTablePanel_Dialog(), BorderLayout.CENTER);
+            
+            // 3. Bottom Panel (SOUTH)
+            add(createBottomPanel_Dialog(), BorderLayout.SOUTH);
+            
+            // Tải dữ liệu ban đầu
+            loadLichSuData();
+        }
+        
+     // Panel Lọc (ĐÃ SỬA: Ràng buộc ngày tương lai)
+        private JPanel createFilterPanel_Dialog() {
+            JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+            panel.setBorder(BorderFactory.createTitledBorder("Lọc theo ngày mua"));
+            
+            Date homNay = new Date(); // Lấy ngày hôm nay
+            
+            panel.add(new JLabel("Từ ngày:"));
+            dateTuNgay = new JDateChooser();
+            dateTuNgay.setDateFormatString("dd/MM/yyyy");
+            dateTuNgay.setPreferredSize(new Dimension(130, 25));
+            dateTuNgay.setMaxSelectableDate(homNay); // <<< SỬA: Ràng buộc không chọn tương lai
+            panel.add(dateTuNgay); 
+            
+            panel.add(new JLabel("Đến ngày:"));
+            dateDenNgay = new JDateChooser();
+            dateDenNgay.setDateFormatString("dd/MM/yyyy");
+            dateDenNgay.setPreferredSize(new Dimension(130, 25));
+            dateDenNgay.setDate(homNay); // Mặc định là hôm nay
+            dateDenNgay.setMaxSelectableDate(homNay); // <<< SỬA: Ràng buộc không chọn tương lai
+            panel.add(dateDenNgay); 
+            
+            btnLoc = new JButton("🔍 Lọc");
+            btnLoc.setBackground(new Color(52, 152, 219));
+            btnLoc.setForeground(Color.WHITE);
+            btnLoc.addActionListener(e -> loadLichSuData());
+            panel.add(btnLoc);
+            
+            JButton btnBoLoc = new JButton("Làm mới");
+            btnBoLoc.setBackground(new Color(149, 165, 166));
+            btnBoLoc.setForeground(Color.WHITE);
+            btnBoLoc.addActionListener(e -> {
+                dateTuNgay.setDate(null);
+                dateDenNgay.setDate(new Date());
+                loadLichSuData();
+            });
+            panel.add(btnBoLoc);
+            
+            return panel;
+        }
+        
+        // Panel Bảng
+        private JScrollPane createTablePanel_Dialog() {
+            String[] columns = {"Mã HĐ", "Mã NV", "Ngày Lập", "Tổng Tiền", "Trạng Thái"};
+            modelLichSu = new DefaultTableModel(columns, 0) {
+                @Override
+                public boolean isCellEditable(int row, int col) { return false; }
+            };
+            tableLichSu = new JTable(modelLichSu);
+            tableLichSu.setRowHeight(25);
+            tableLichSu.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+            tableLichSu.getTableHeader().setBackground(new Color(52, 73, 94));
+            tableLichSu.getTableHeader().setForeground(Color.WHITE);
+            return new JScrollPane(tableLichSu);
+        }
+        
+        // Panel Dưới (Tổng tiền + Nút)
+        private JPanel createBottomPanel_Dialog() {
+            JPanel panel = new JPanel(new BorderLayout(10, 10));
+            panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+            
+            lblTongChiTieu = new JLabel("Tổng chi tiêu (theo bộ lọc): 0 đ", SwingConstants.LEFT);
+            lblTongChiTieu.setFont(new Font("Segoe UI", Font.BOLD, 16));
+            lblTongChiTieu.setForeground(Color.RED);
+            
+            JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            
+            JButton btnDong = new JButton("Đóng");
+            btnDong.setBackground(new Color(231, 76, 60));
+            btnDong.setForeground(Color.WHITE);
+            btnDong.setPreferredSize(new Dimension(100, 30));
+            btnDong.addActionListener(e -> dispose()); // Đóng dialog
+            btnPanel.add(btnDong);
+            
+            panel.add(lblTongChiTieu, BorderLayout.CENTER);
+            panel.add(btnPanel, BorderLayout.EAST);
+            
+            return panel;
+        }
+        
+     // Hàm Load Data (ĐÃ SỬA: Kiểm tra "Từ ngày" > "Đến ngày")
+        private void loadLichSuData() {
+            modelLichSu.setRowCount(0);
+            
+            Date tuNgay = dateTuNgay.getDate();
+            Date denNgay = dateDenNgay.getDate();
+            
+            // <<< SỬA: Thêm khối kiểm tra validation >>>
+            if (tuNgay != null && denNgay != null && tuNgay.after(denNgay)) {
+                JOptionPane.showMessageDialog(this, 
+                    "Lỗi: Ngày bắt đầu không được lớn hơn ngày kết thúc.", 
+                    "Lỗi Lọc Ngày", 
+                    JOptionPane.ERROR_MESSAGE);
+                return; // Dừng lại, không lọc
+            }
+            // <<< Kết thúc khối kiểm tra >>>
+
+            // Lấy TẤT CẢ HĐ từ CSDL
+            List<HoaDon> list = hoaDonDAO_Dialog.getAll(); 
+            
+            if (list == null) {
+                list = new ArrayList<>(); // Tránh NullPointerException
+            }
+            
+            float tongChiTieu = 0;
+            
+            for (HoaDon hd : list) {
+                // Lọc 1: Phải đúng khách hàng này
+                if (!this.idKH.equals(hd.getIdKH())) {
+                    continue;
+                }
+                
+                // Lọc 2: Chỉ lấy hóa đơn "Đã thanh toán"
+                if (!"Đã thanh toán".equalsIgnoreCase(hd.getStatus())) {
+                    continue;
+                }
+                
+                // Lọc 3: Lọc theo ngày (nếu có)
+                Date ngayLap = hd.getNgayLap();
+                boolean pass = true;
+                
+                if (tuNgay != null && ngayLap.before(tuNgay)) {
+                    pass = false;
+                }
+                // (Thêm 1 ngày cho 'denNgay' để bao gồm cả ngày đó)
+                if (denNgay != null) {
+                    // Cần set thời gian của denNgay về cuối ngày (23:59:59)
+                    // Hoặc cách đơn giản hơn là kiểm tra xem ngayLap có sau (after) denNgay không
+                    // (Lưu ý: JDateChooser trả về 00:00:00 của ngày đó)
+                    
+                    // Nếu ngày lập là 16/11 10:00
+                    // và denNgay là 15/11 00:00
+                    // ngayLap.after(denNgay) -> true -> pass = false (ĐÚNG)
+                    
+                    // Nếu ngày lập là 15/11 10:00
+                    // và denNgay là 15/11 00:00
+                    // ngayLap.after(denNgay) -> true -> pass = false (SAI, phải bao gồm cả ngày 15)
+                    
+                    // Sửa logic:
+                    if (ngayLap.after(denNgay) && !sdf_Dialog.format(ngayLap).equals(sdf_Dialog.format(denNgay))) {
+                         pass = false;
+                    }
+                }
+                
+                if (pass) {
+                    modelLichSu.addRow(new Object[]{
+                        hd.getIdHD(),
+                        hd.getIdNV(),
+                        sdf_Dialog.format(hd.getNgayLap()),
+                        df_Dialog.format(hd.getTongTien()) + " đ",
+                        hd.getStatus()
+                    });
+                    tongChiTieu += hd.getTongTien();
+                }
+            }
+            
+            // Cập nhật tổng chi tiêu
+            lblTongChiTieu.setText("Tổng chi tiêu (theo bộ lọc): " + df_Dialog.format(tongChiTieu) + " đ");
+            
+            if (modelLichSu.getRowCount() == 0) {
+                // Không cần báo lỗi, có thể chỉ là không có dữ liệu
+            }
+        }
+    } // === Hết class LichSuMuaHangDialog ===
+    
 }

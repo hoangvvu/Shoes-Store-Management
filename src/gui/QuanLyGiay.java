@@ -24,11 +24,18 @@ public class QuanLyGiay extends JPanel {
     private JTextField txtId, txtTen, txtSize, txtSoLuong, txtGiaBan, txtTimKiem;
     private JTextArea txtMoTa;
     
+    // SỬA LỖI: Bổ sung khai báo 3 biến này cho Form
+    private JComboBox<String> cboLoaiGiay; 
+    private JComboBox<String> cboHangGiay;
+    private JComboBox<String> cboStatus;
+    
     // =================================================================
-    // SỬA ĐỔI LỚN: Bỏ cboLocTheo, cboGiaTriLoc. Dùng 1 cboFilter duy nhất
+    // SỬA ĐỔI THEO YÊU CẦU: Dùng 2 cboFilter riêng biệt
     // =================================================================
-    private JComboBox<String> cboLoaiGiay, cboHangGiay, cboStatus;
-    private JComboBox<String> cboFilter; // Combobox LỌC DUY NHẤT
+    private JComboBox<String> cboLocTheoLoai; // Combobox Lọc theo Loại Giày
+    private JComboBox<String> cboLocTheoHang; // Combobox Lọc theo Hãng Giày
+    // private JComboBox<String> cboFilter; // BỎ
+    
     // SỬA ĐỔI: Thêm btnThemLoai
     private JButton btnThem, btnSua, btnLamMoi, btnTimKiem, btnChonAnh, btnThemHang, btnThemLoai; 
     private JLabel lblHinhAnh;
@@ -42,11 +49,10 @@ public class QuanLyGiay extends JPanel {
     private Map<String, String> hangGiayMap = new HashMap<>();
     private Map<String, String> hangGiayIdMap = new HashMap<>();
     
-    // Biến trạng thái cho cboFilter
-    private boolean isShowingCriteria = true; // true = đang hiển thị "Lọc theo...", false = đang hiển thị giá trị
-    private String currentFilterMode = ""; // "LOAI" hoặc "HANG"
-    // Lưu listener để có thể gỡ ra/thêm vào khi thay đổi item, tránh lỗi
-    private ActionListener cboFilterActionListener; 
+    // BỎ: Các biến trạng thái cho cboFilter
+    // private boolean isShowingCriteria = true; 
+    // private String currentFilterMode = ""; 
+    // private ActionListener cboFilterActionListener; 
     
     private ChiTietPhanQuyen permission;
     
@@ -221,7 +227,9 @@ public class QuanLyGiay extends JPanel {
         // --- SỬA ĐỔI: Thêm nút '+' cho Loại Giày ---
         gbc.gridx = 0; gbc.gridy = 7;
         formPanel.add(new JLabel("Loại giày:"), gbc);
-        cboLoaiGiay = new JComboBox<>();
+        
+        // SỬA LỖI: Dùng biến thành viên
+        cboLoaiGiay = new JComboBox<>(); 
         
         // Gán 'btnThemLoai' cho biến thành viên
         btnThemLoai = new JButton("+");
@@ -242,6 +250,8 @@ public class QuanLyGiay extends JPanel {
         
         gbc.gridx = 0; gbc.gridy = 8;
         formPanel.add(new JLabel("Hãng giày:"), gbc);
+        
+        // SỬA LỖI: Dùng biến thành viên
         cboHangGiay = new JComboBox<>();
         
         // Gán 'btnThemHang' cho biến thành viên
@@ -277,7 +287,10 @@ public class QuanLyGiay extends JPanel {
         
         gbc.gridx = 0; gbc.gridy = 10;
         formPanel.add(new JLabel("Trạng thái:"), gbc);
+        
+        // SỬA LỖI: Dùng biến thành viên
         cboStatus = new JComboBox<>(new String[]{"Hoạt động", "Ngừng hoạt động"});
+        
         gbc.gridx = 1;
         formPanel.add(cboStatus, gbc);
         
@@ -345,26 +358,31 @@ public class QuanLyGiay extends JPanel {
         searchPanel.add(Box.createHorizontalStrut(20));
         
         // =================================================================
-        // SỬA ĐỔI: Chỉ dùng 1 cboFilter
+        // SỬA ĐỔI: Dùng 2 cboFilter riêng biệt
         // =================================================================
-        JLabel lblLoc = new JLabel("Lọc:");
-        lblLoc.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        searchPanel.add(lblLoc);
+        JLabel lblLocLoai = new JLabel("Lọc theo loại:");
+        lblLocLoai.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        searchPanel.add(lblLocLoai);
         
-        cboFilter = new JComboBox<>();
-        cboFilter.setPreferredSize(new Dimension(180, 30)); 
-        cboFilter.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        cboLocTheoLoai = new JComboBox<>();
+        cboLocTheoLoai.setPreferredSize(new Dimension(150, 30));
+        cboLocTheoLoai.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        searchPanel.add(cboLocTheoLoai);
         
-        // Khởi tạo listener và lưu lại
-        cboFilterActionListener = e -> onFilterSelect();
-        cboFilter.addActionListener(cboFilterActionListener);
+        searchPanel.add(Box.createHorizontalStrut(10)); 
         
-        // Khởi tạo trạng thái ban đầu
-        isShowingCriteria = true;
-        currentFilterMode = "";
-        loadFilterOptions("CRITERIA"); // Tải các mục "Lọc theo..."
+        JLabel lblLocHang = new JLabel("Lọc theo hãng:");
+        lblLocHang.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        searchPanel.add(lblLocHang);
         
-        searchPanel.add(cboFilter);
+        cboLocTheoHang = new JComboBox<>();
+        cboLocTheoHang.setPreferredSize(new Dimension(150, 30));
+        cboLocTheoHang.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        searchPanel.add(cboLocTheoHang);
+
+        // --- Thêm sự kiện ---
+        cboLocTheoLoai.addActionListener(e -> onFilterLoaiSelect());
+        cboLocTheoHang.addActionListener(e -> onFilterHangSelect());
         // KẾT THÚC SỬA ĐỔI
         
         // Gọi hàm lọc/tìm kiếm GỘP
@@ -500,16 +518,25 @@ public class QuanLyGiay extends JPanel {
         cboLoaiGiay.removeAllItems(); 
         cboHangGiay.removeAllItems(); 
         
+        // SỬA ĐỔI: Xóa dữ liệu cũ (cho Filter)
+        if(cboLocTheoLoai != null) cboLocTheoLoai.removeAllItems();
+        if(cboLocTheoHang != null) cboLocTheoHang.removeAllItems();
+        
         loaiGiayMap.clear();
         loaiGiayIdMap.clear();
         hangGiayMap.clear();
         hangGiayIdMap.clear();
+
+        // SỬA ĐỔI: Thêm mục "Tất cả" cho filter
+        if(cboLocTheoLoai != null) cboLocTheoLoai.addItem("Tất cả");
+        if(cboLocTheoHang != null) cboLocTheoHang.addItem("Tất cả");
 
         // --- Load Loại Giày ---
         List<LoaiGiay> listLoai = loaiGiayDAO.getAll();
         for (LoaiGiay lg : listLoai) {
             String tenLoai = lg.getTenLoaiGiay();
             cboLoaiGiay.addItem(tenLoai); // Add to Form
+            if(cboLocTheoLoai != null) cboLocTheoLoai.addItem(tenLoai); // SỬA ĐỔI: Add to Filter
             loaiGiayMap.put(lg.getIdLoaiGiay(), tenLoai);
             loaiGiayIdMap.put(tenLoai, lg.getIdLoaiGiay());
         }
@@ -519,106 +546,67 @@ public class QuanLyGiay extends JPanel {
         for (HangGiay hg : listHang) {
             String tenHang = hg.getTenHangGiay();
             cboHangGiay.addItem(tenHang); // Add to Form
+            if(cboLocTheoHang != null) cboLocTheoHang.addItem(tenHang); // SỬA ĐỔI: Add to Filter
             hangGiayMap.put(hg.getIdHangGiay(), tenHang);
             hangGiayIdMap.put(tenHang, hg.getIdHangGiay());
         }
         
-        // SỬA ĐỔI: Khởi tạo cboFilter
-        if (cboFilter != null) {
-            loadFilterOptions("CRITERIA");
-        }
+        // SỬA ĐỔI: Bỏ logic cboFilter
+        // if (cboFilter != null) {
+        //     loadFilterOptions("CRITERIA");
+        // }
     }
     
     // =================================================================
-    // HÀM MỚI: Tải lại nội dung cho cboFilter
+    // BỎ: HÀM Tải lại nội dung cho cboFilter
     // =================================================================
-    private void loadFilterOptions(String mode) {
+    // private void loadFilterOptions(String mode) { ... }
+    
+    // =================================================================
+    // BỎ: HÀM Xử lý sự kiện khi chọn cboFilter
+    // =================================================================
+    // private void onFilterSelect() { ... }
+    
+    // =================================================================
+    // HÀM MỚI: Xử lý sự kiện khi chọn Lọc Loại
+    // =================================================================
+    private void onFilterLoaiSelect() {
         // Kiểm tra null
-        if (cboFilter == null || cboFilterActionListener == null) {
+        if (cboLocTheoLoai == null || cboLocTheoHang == null || cboLocTheoLoai.getSelectedItem() == null) {
             return;
         }
-
-        // Tạm thời gỡ listener để tránh kích hoạt vòng lặp khi .addItem
-        cboFilter.removeActionListener(cboFilterActionListener);
         
-        cboFilter.removeAllItems();
+        String selectedLoai = cboLocTheoLoai.getSelectedItem().toString();
         
-        if (mode.equals("CRITERIA")) {
-            // Hiển thị các tiêu chí lọc
-            cboFilter.addItem("Lọc theo..."); // Mục mờ
-            cboFilter.addItem("Hiển thị Tất cả");
-            cboFilter.addItem("Lọc theo Loại Giày");
-            cboFilter.addItem("Lọc theo Hãng Giày");
-            isShowingCriteria = true;
-            currentFilterMode = "";
-            
-        } else if (mode.equals("LOAI")) {
-            // Hiển thị các giá trị Lọai Giày
-            cboFilter.addItem("< Quay lại");
-            cboFilter.addItem("Tất cả Loại Giày");
-            for (String tenLoai : loaiGiayIdMap.keySet()) {
-                cboFilter.addItem(tenLoai);
-            }
-            isShowingCriteria = false;
-            // currentFilterMode đã được set là "LOAI" trước khi gọi hàm này
-            
-        } else if (mode.equals("HANG")) {
-            // Hiển thị các giá trị Hãng Giày
-            cboFilter.addItem("< Quay lại");
-            cboFilter.addItem("Tất cả Hãng Giày");
-            for (String tenHang : hangGiayIdMap.keySet()) {
-                cboFilter.addItem(tenHang);
-            }
-            isShowingCriteria = false;
-            // currentFilterMode đã được set là "HANG" trước khi gọi hàm này
+        // Nếu chọn một loại cụ thể
+        if (!selectedLoai.equals("Tất cả")) {
+            // Reset cboLocTheoHang
+            cboLocTheoHang.setSelectedItem("Tất cả");
         }
         
-        // Thêm lại listener
-        cboFilter.addActionListener(cboFilterActionListener);
+        // Cập nhật lại bảng
+        capNhatDanhSachHienThi(false);
     }
     
     // =================================================================
-    // HÀM MỚI: Xử lý sự kiện khi chọn cboFilter
+    // HÀM MỚI: Xử lý sự kiện khi chọn Lọc Hãng
     // =================================================================
-    private void onFilterSelect() {
-        if (cboFilter.getSelectedItem() == null) {
+    private void onFilterHangSelect() {
+         // Kiểm tra null
+        if (cboLocTheoLoai == null || cboLocTheoHang == null || cboLocTheoHang.getSelectedItem() == null) {
             return;
         }
         
-        String selected = cboFilter.getSelectedItem().toString();
+        String selectedHang = cboLocTheoHang.getSelectedItem().toString();
         
-        if (isShowingCriteria) {
-            // === Đang ở màn hình chọn TIÊU CHÍ ===
-            
-            if (selected.equals("Lọc theo Loại Giày")) {
-                currentFilterMode = "LOAI"; // Lưu trạng thái
-                loadFilterOptions("LOAI"); // Tải lại combobox với các Loại
-                
-            } else if (selected.equals("Lọc theo Hãng Giày")) {
-                currentFilterMode = "HANG"; // Lưu trạng thái
-                loadFilterOptions("HANG"); // Tải lại combobox với các Hãng
-                
-            } else if (selected.equals("Hiển thị Tất cả")) {
-                // Đã chọn "Hiển thị Tất cả", lọc lại bảng
-                capNhatDanhSachHienThi(false); 
-                
-            } else if (selected.equals("Lọc theo...")) {
-                // Không làm gì cả
-            }
-            
-        } else {
-            // === Đang ở màn hình chọn GIÁ TRỊ ===
-            
-            if (selected.equals("< Quay lại")) {
-                loadFilterOptions("CRITERIA"); // Tải lại các Tiêu chí
-                // Khi quay lại, cũng lọc lại bảng (tương đương "Hiển thị tất cả")
-                capNhatDanhSachHienThi(false);
-            } else {
-                // Đã chọn một giá trị (Vd: "Sneaker" hoặc "Tất cả Loại Giày")
-                // -> Lọc lại bảng
-                capNhatDanhSachHienThi(false);
-            }
+        // Nếu chọn một hãng cụ thể
+        if (!selectedHang.equals("Tất cả")) {
+            // Reset cboLocTheoLoai
+            cboLocTheoLoai.setSelectedItem("Tất cả");
         }
+        
+        // Cập nhật lại bảng
+        capNhatDanhSachHienThi(false);
     }
     
     private void chonHinhAnh() {
@@ -953,44 +941,33 @@ public class QuanLyGiay extends JPanel {
     }
     
     // =================================================================
-    // SỬA ĐỔI: HÀM LỌC GỘP (Đọc từ trạng thái của cboFilter)
+    // SỬA ĐỔI: HÀM LỌC GỘP (Đọc từ 2 cboFilter riêng biệt)
     // =================================================================
     private void capNhatDanhSachHienThi(boolean showMessage) {
         String keyword = txtTimKiem.getText().trim().toLowerCase();
 
-        // Lấy giá trị lọc từ cboFilter và các biến trạng thái
+        // SỬA ĐỔI: Lấy giá trị lọc từ 2 combobox mới
         String idLoai = "Tất cả";
         String idHang = "Tất cả";
         
         // Kiểm tra null
-        if (cboFilter == null || cboFilter.getSelectedItem() == null) {
+        if (cboLocTheoLoai == null || cboLocTheoHang == null || 
+            cboLocTheoLoai.getSelectedItem() == null || cboLocTheoHang.getSelectedItem() == null) {
             loadData(); // Tải dữ liệu mặc định nếu combobox chưa sẵn sàng
             return;
         }
         
-        String selected = cboFilter.getSelectedItem().toString();
-
-        // Chỉ lọc khi đang ở màn hình GIÁ TRỊ
-        if (!isShowingCriteria) { 
-            if (currentFilterMode.equals("LOAI")) {
-                // Nếu không phải là "Tất cả" hoặc "Quay lại"
-                if (!selected.equals("Tất cả Loại Giày") && !selected.equals("< Quay lại")) {
-                    idLoai = loaiGiayIdMap.get(selected); // Lấy ID
-                    if (idLoai == null) idLoai = "Tất cả"; // An toàn
-                }
-                // Nếu chọn "Tất cả Loại Giày", idLoai vẫn là "Tất cả" (đúng)
-                
-            } else if (currentFilterMode.equals("HANG")) {
-                 // Nếu không phải là "Tất cả" hoặc "Quay lại"
-                if (!selected.equals("Tất cả Hãng Giày") && !selected.equals("< Quay lại")) {
-                    idHang = hangGiayIdMap.get(selected); // Lấy ID
-                    if (idHang == null) idHang = "Tất cả"; // An toàn
-                }
-                // Nếu chọn "Tất cả Hãng Giày", idHang vẫn là "Tất cả" (đúng)
-            }
+        String selectedLoai = cboLocTheoLoai.getSelectedItem().toString();
+        if (!selectedLoai.equals("Tất cả")) {
+            idLoai = loaiGiayIdMap.get(selectedLoai); // Lấy ID
+            if (idLoai == null) idLoai = "Tất cả"; // An toàn
         }
-        // Nếu isShowingCriteria = true (đang ở "Lọc theo..."), 
-        // idLoai và idHang vẫn là "Tất cả" (đúng)
+        
+        String selectedHang = cboLocTheoHang.getSelectedItem().toString();
+        if (!selectedHang.equals("Tất cả")) {
+            idHang = hangGiayIdMap.get(selectedHang); // Lấy ID
+            if (idHang == null) idHang = "Tất cả"; // An toàn
+        }
 
         tableModel.setRowCount(0);
         List<Giay> list = giayDAO.getAll();
@@ -1118,14 +1095,15 @@ public class QuanLyGiay extends JPanel {
         txtTimKiem.setText("");
         cboStatus.setSelectedIndex(0);
         
-        // SỬA ĐỔI: Reset combobox lọc về trạng thái "CRITERIA" (Tiêu chí)
-        if (cboFilter != null) {
-            loadFilterOptions("CRITERIA");
+        // SỬA ĐỔI: Reset 2 combobox lọc về "Tất cả"
+        if (cboLocTheoLoai != null) {
+            cboLocTheoLoai.setSelectedItem("Tất cả");
         }
-        // (Việc này KHÔNG tự động lọc, vì hàm capNhatDanhSachHienThi
-        // sẽ thấy isShowingCriteria = true và bỏ qua lọc)
+        if (cboLocTheoHang != null) {
+            cboLocTheoHang.setSelectedItem("Tất cả");
+        }
         
-        // Vì vậy, ta phải gọi loadData() để tải lại tất cả
+        // Vì đã reset bộ lọc, ta phải gọi loadData() để tải lại tất cả
         loadData(); 
         
         if (cboLoaiGiay.getItemCount() > 0) cboLoaiGiay.setSelectedIndex(0);
