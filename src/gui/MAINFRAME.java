@@ -141,7 +141,7 @@ public class MAINFRAME extends JFrame {
         JPanel footerPanel = new JPanel();
         footerPanel.setBackground(new Color(52, 73, 94));
         footerPanel.setPreferredSize(new Dimension(0, 30));
-        JLabel lblFooter = new JLabel("© 2024 Shoe Store Management System - Version 1.0");
+        JLabel lblFooter = new JLabel("© 2025 Shoe Store Management System - Version 1.0");
         lblFooter.setForeground(Color.WHITE);
         lblFooter.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         footerPanel.add(lblFooter);

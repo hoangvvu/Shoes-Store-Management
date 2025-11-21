@@ -251,6 +251,8 @@ public class QuanLyThongKe extends JPanel {
         dateFrom.setDateFormatString("dd/MM/yyyy");
         dateFrom.setPreferredSize(new Dimension(130, 30));
         dateFrom.setMaxSelectableDate(new Date()); // Chặn ngày tương lai
+        
+        // Mặc định khi mở lên: Lấy từ 30 ngày trước
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DAY_OF_MONTH, -30);
         dateFrom.setDate(cal.getTime());
@@ -273,18 +275,15 @@ public class QuanLyThongKe extends JPanel {
         // Thêm panel con vào panel chính
         panel.add(pnBoLocNgay);
 
-        // === 2. CÁC NÚT CHỨC NĂNG CHUNG (LUÔN HIỂN THỊ) ===
+        // === 2. CÁC NÚT CHỨC NĂNG CHUNG ===
         
+        // <<< SỬA ĐỔI TẠI ĐÂY: GỌI HÀM RESET KHI ẤN LÀM MỚI >>>
         JButton btnLamMoi = createStyledButton("Làm mới", new Color(149, 165, 166));
         btnLamMoi.addActionListener(e -> {
-            // Nếu đang ở Báo cáo tổng hợp thì gọi hàm hiển thị (refresh toàn bộ)
-            if (currentViewIndex == 6) {
-                hienThiBaoCaoTongHop();
-            } else {
-                locDuLieu();
-            }
+            resetVaHienThiToanBo(); // Gọi hàm reset ngày và load lại bảng
         });
         panel.add(btnLamMoi);
+        // =======================================================
 
         JButton btnXuatExcel = createStyledButton("Xuất Excel", new Color(46, 204, 113));
         btnXuatExcel.addActionListener(e -> xuatBaoCao());
@@ -719,13 +718,15 @@ public class QuanLyThongKe extends JPanel {
     private void thongKeDoanhThuTheoNgay() {
         modelThongKe.setRowCount(0);
         Date tuNgay = dateFrom.getDate();
-        Date denNgay = dateTo.getDate();
+        // <<< SỬA: Lấy đến hết ngày (23:59:59) >>>
+        Date denNgay = getEndOfDay(dateTo.getDate()); 
 
         if (tuNgay == null || denNgay == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn khoảng thời gian!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
+        // Lấy dữ liệu với thời gian đã chỉnh sửa
         Map<String, Float> doanhThuTheoNgay = getDataDoanhThuTheoNgay(tuNgay, denNgay);
         List<HoaDon> listHD_raw = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay)); 
         List<HoaDon> listHD = filterHoaDon(listHD_raw); 
@@ -744,11 +745,10 @@ public class QuanLyThongKe extends JPanel {
         String[] columns = {"Số thứ tự", "Ngày", "Số đơn hàng", "Doanh thu"};
         modelThongKe.setColumnIdentifiers(columns);
         
-        // === SỬA LỖI HIỂN THỊ TIÊU ĐỀ BẢNG (Buộc vẽ lại Header) ===
         tableThongKe.getTableHeader().revalidate();
         tableThongKe.getTableHeader().repaint();
-        // ====================================
 
+        // Đổ dữ liệu vào bảng
         for (Map.Entry<String, Float> entry : doanhThuTheoNgay.entrySet()) {
             String ngay = entry.getKey();
             float doanhThu = entry.getValue();
@@ -761,14 +761,13 @@ public class QuanLyThongKe extends JPanel {
 
         updateSummaryCards(tuNgay, denNgay);
         
-     // Trong hàm thongKeDoanhThuTheoNgay()
+        // Vẽ biểu đồ
         ChartPanel chartPanel = createRevenueByDayChart(tuNgay, denNgay, "BIỂU ĐỒ DOANH THU THEO NGÀY");
         
         pnDetailDoanhThuNgay.removeAll(); 
         pnDetailDoanhThuNgay.add(chartPanel, BorderLayout.NORTH); 
         pnDetailDoanhThuNgay.add(tableScrollPane, BorderLayout.CENTER); 
         
-        // **THÊM DÒNG NÀY** để đảm bảo bảng cuộn lên đầu và vẽ lại header
         tableScrollPane.getVerticalScrollBar().setValue(0);
         tableThongKe.getTableHeader().repaint();
 
@@ -780,16 +779,26 @@ public class QuanLyThongKe extends JPanel {
 
     private void thongKeDoanhThuTheoThang() {
         modelThongKe.setRowCount(0);
-        // Lưu ý: Thống kê này lấy TẤT CẢ dữ liệu, không theo bộ lọc
-        List<HoaDon> listHD_raw = hoaDonDAO.getAll(); 
-        List<HoaDon> listHD = filterHoaDon(listHD_raw); // <<< LỌC HÓA ĐƠN
+        
+        // 1. Lấy ngày từ bộ lọc và xử lý EndOfDay (Thêm đoạn này)
+        Date tuNgay = dateFrom.getDate();
+        Date denNgay = getEndOfDay(dateTo.getDate()); 
+
+        if (tuNgay == null || denNgay == null) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn khoảng thời gian!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // 2. Sửa getAll() thành getByDateRange(...) (Sửa đoạn này)
+        List<HoaDon> listHD_raw = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay)); 
+        List<HoaDon> listHD = filterHoaDon(listHD_raw); 
         
         if (listHD == null) listHD = new ArrayList<>();
 
         Map<String, Float> doanhThuTheoThang = new TreeMap<>();
         Map<String, Integer> soDonTheoThang = new TreeMap<>();
         
-        for (HoaDon hd : listHD) { // Dùng list đã lọc
+        for (HoaDon hd : listHD) { 
             if (hd == null || hd.getNgayLap() == null) continue;
             String thang = monthFormat.format(hd.getNgayLap());
             doanhThuTheoThang.put(thang, doanhThuTheoThang.getOrDefault(thang, 0f) + hd.getTongTien());
@@ -803,12 +812,10 @@ public class QuanLyThongKe extends JPanel {
         String[] columns = {"Số thứ tự", "Tháng/Năm", "Số đơn hàng", "Doanh thu"};
         modelThongKe.setColumnIdentifiers(columns);
         
-        // === SỬA LỖI HIỂN THỊ TIÊU ĐỀ BẢNG ===
         tableThongKe.getTableHeader().revalidate();
         tableThongKe.getTableHeader().repaint();
-        // ====================================
 
-        DefaultCategoryDataset chartDataset = new DefaultCategoryDataset(); // Dataset cho chart
+        DefaultCategoryDataset chartDataset = new DefaultCategoryDataset(); 
 
         for (Map.Entry<String, Float> entry : doanhThuTheoThang.entrySet()) {
             String thang = entry.getKey();
@@ -816,23 +823,20 @@ public class QuanLyThongKe extends JPanel {
             int soDon = soDonTheoThang.getOrDefault(thang, 0);
 
             modelThongKe.addRow(new Object[]{ stt++, thang, soDon, df.format(doanhThu) + " đ" });
-            chartDataset.addValue(doanhThu, "Doanh thu", thang); // Thêm data cho chart
+            chartDataset.addValue(doanhThu, "Doanh thu", thang); 
             tongDoanhThu += doanhThu;
             tongDonHang += soDon;
         }
 
-        // Cập nhật summary (theo bộ lọc, không phải tổng)
-        updateSummaryCards(dateFrom.getDate(), dateTo.getDate());
-        lblTongDoanhThu.setText(df.format(tongDoanhThu) + " đ (Tổng)"); // Ghi đè tổng doanh thu
+        // Cập nhật thẻ tổng quan
+        updateSummaryCards(tuNgay, denNgay); // Sửa tham số truyền vào
+        lblTongDoanhThu.setText(df.format(tongDoanhThu) + " đ (Tổng)"); 
 
-        // === NÂNG CẤP: TẠO BIỂU ĐỒ VÀ HIỂN THỊ PANEL ===
         JFreeChart barChart = ChartFactory.createBarChart(
-            "Biểu đồ doanh thu theo tháng", "Ngày", "Doanh thu",
+            "Biểu đồ doanh thu theo tháng", "Tháng", "Doanh thu",
             chartDataset, PlotOrientation.VERTICAL, false, true, false);
             
-        // === ÁP DỤNG THEME HIỆN ĐẠI ===
         applyModernTheme(barChart);
-        // ==============================
             
         ChartPanel chartPanel = new ChartPanel(barChart);
         chartPanel.setPreferredSize(new Dimension(0, 250));
@@ -850,7 +854,7 @@ public class QuanLyThongKe extends JPanel {
     private void thongKeSanPhamBanChay() {
         modelThongKe.setRowCount(0);
         Date tuNgay = dateFrom.getDate();
-        Date denNgay = dateTo.getDate();
+        Date denNgay = getEndOfDay(dateTo.getDate());
 
         // Hàm này đã được lọc
         Map.Entry<Map<String, Integer>, Map<String, Float>> data = getDataSanPhamBanChay(tuNgay, denNgay);
@@ -921,7 +925,7 @@ public class QuanLyThongKe extends JPanel {
     private void thongKeNhapHang() {
         modelThongKe.setRowCount(0);
         Date tuNgay = dateFrom.getDate();
-        Date denNgay = dateTo.getDate();
+        Date denNgay = getEndOfDay(dateTo.getDate());
 
         List<NhapKho> listNK_raw = nhapKhoDAO.getByDate(toSqlDate(tuNgay), toSqlDate(denNgay));
         List<NhapKho> listNK = filterNhapKho(listNK_raw); // <<< LỌC PHIẾU NHẬP
@@ -1001,7 +1005,7 @@ public class QuanLyThongKe extends JPanel {
     private void thongKeTopKhachHang() {
         modelThongKe.setRowCount(0);
         Date tuNgay = dateFrom.getDate();
-        Date denNgay = dateTo.getDate();
+        Date denNgay = getEndOfDay(dateTo.getDate());
 
         // Hàm này đã được lọc
         Map.Entry<Map<String, Float>, Map<String, Integer>> data = getDataTopKhachHang(tuNgay, denNgay);
@@ -1199,8 +1203,12 @@ public class QuanLyThongKe extends JPanel {
  // Tìm và thay thế hàm locDuLieu() cũ bằng hàm này
     private void locDuLieu() {
         Date tuNgay = dateFrom.getDate();
-        Date denNgay = dateTo.getDate();
-        Date hienTai = new Date(); // Lấy thời điểm hiện tại
+        Date denNgay = getEndOfDay(dateTo.getDate()); // 23:59:59 của ngày được chọn
+
+        // === SỬA LỖI TẠI ĐÂY ===
+        // Thay vì lấy new Date() (giờ hiện tại), ta lấy "Cuối ngày hôm nay" để so sánh
+        // Điều này đảm bảo nếu chọn "Hôm nay" (23:59:59) thì vẫn hợp lệ
+        Date cuoiNgayHomNay = getEndOfDay(new Date()); 
 
         // 1. Kiểm tra chưa chọn ngày
         if (tuNgay == null || denNgay == null) {
@@ -1218,10 +1226,10 @@ public class QuanLyThongKe extends JPanel {
             return;
         }
 
-        // 3. Kiểm tra: Không được chọn ngày trong tương lai (Logic bổ sung cho trường hợp nhập tay)
-        // JDateChooser thường trả về 00:00:00. hienTai có cả giờ phút giây.
-        // Nếu tuNgay > hienTai nghĩa là ngày mai trở đi.
-        if (tuNgay.after(hienTai) || denNgay.after(hienTai)) {
+        // 3. Kiểm tra tương lai
+        // So sánh: Ngày chọn (23:59:59) > Ngày hôm nay (23:59:59) ?
+        // Nếu bằng nhau (cùng là hôm nay) thì .after() trả về false -> Hợp lệ.
+        if (tuNgay.after(cuoiNgayHomNay) || denNgay.after(cuoiNgayHomNay)) {
             JOptionPane.showMessageDialog(this, 
                 "Thời gian chọn không được ở trong tương lai!", 
                 "Lỗi thời gian", JOptionPane.WARNING_MESSAGE);
@@ -1462,6 +1470,29 @@ public class QuanLyThongKe extends JPanel {
             return null; // Không cần thiết cho việc hiển thị biểu đồ
         }
     }
-    // ==========================================================
+    private Date getEndOfDay(Date date) {
+        if (date == null) return null;
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MINUTE, 59);
+        calendar.set(Calendar.SECOND, 59);
+        calendar.set(Calendar.MILLISECOND, 999);
+        return calendar.getTime();
+    }
+    
+    private void resetVaHienThiToanBo() {
+        Calendar cal = Calendar.getInstance();
+        cal.set(2020, Calendar.JANUARY, 1); 
+        dateFrom.setDate(cal.getTime());
+        dateTo.setDate(new Date());
+        if (currentViewIndex == 0) {
+            hienThiDashboard(); 
+        } else if (currentViewIndex == 6) {
+            hienThiBaoCaoTongHop();
+        } else {
+            locDuLieu();
+        }
+    }
     
 }

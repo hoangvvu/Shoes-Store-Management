@@ -687,7 +687,7 @@ public class QuanLyGiay extends JPanel {
             
             if (giayDAO.insert(g)) {
                 JOptionPane.showMessageDialog(this, 
-                    "<html>Thêm giày thành công!<br><br>" +
+                    "<html>Tạo giày mới thành công!<br><br>" +
                     "<b>Lưu ý:</b> Số lượng hiện tại = 0<br>" +
                     "Vui lòng vào <b>Quản lý nhập kho</b> để nhập hàng!</html>", 
                     "Thành công", JOptionPane.INFORMATION_MESSAGE);
