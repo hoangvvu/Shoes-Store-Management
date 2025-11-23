@@ -374,7 +374,7 @@ public class QuanLyNhanVien extends JPanel {
         
         panel.add(searchPanel, BorderLayout.NORTH);
         
-        String[] columns = {"Mã nhân viên", "Tên nhân viên", "Ngày sinh", "Giới tính", "số điện thoại", 
+        String[] columns = {"Mã nhân viên", "Tên nhân viên", "Ngày sinh", "Giới tính", "Số điện thoại", 
                            "Địa chỉ", "Ngày vào làm", "Tên đăng nhập", "Phân quyền", "Trạng thái"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override

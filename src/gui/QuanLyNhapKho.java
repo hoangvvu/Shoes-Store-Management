@@ -11,7 +11,7 @@ import java.util.List;
 import javax.swing.border.Border; 
 import DAO.*;
 import model.*;
-import javax.swing.border.TitledBorder; // THÊM MỚI
+import javax.swing.border.TitledBorder;
 
 public class QuanLyNhapKho extends JPanel {
     private JTable tableNhapKho, tableChiTiet, tableSanPham;
@@ -20,8 +20,8 @@ public class QuanLyNhapKho extends JPanel {
     private JTextField txtIdNK, txtIdNV, txtTimKiem, txtSoLuong, txtGiaNhap, txtTimKiemSP; 
     private JLabel lblTongTien;
     
-    // === SỬA ĐỔI: Thêm btnXemChiTietNK ===
-    private JButton btnTaoMoi, btnThemSP, btnXoaSP, btnLuuNK, btnHuyNK, btnLamMoi, btnTimKiem, btnXacNhan, btnXoaNK, btnXemChiTietNK; 
+    // === SỬA ĐỔI: Thêm btnSuaNK vào danh sách nút ===
+    private JButton btnTaoMoi, btnThemSP, btnXoaSP, btnLuuNK, btnHuyNK, btnLamMoi, btnTimKiem, btnXacNhan, btnXoaNK, btnXemChiTietNK, btnSuaNK; 
     private JButton btnThemNCC; 
     
     private JComboBox<NhaCungCap> cboNhaCungCap; 
@@ -40,6 +40,9 @@ public class QuanLyNhapKho extends JPanel {
     private String currentNhapKhoId = "";
     private float tongTienNK = 0;
     
+    // === THÊM MỚI: Biến cờ để xác định đang tạo mới hay sửa ===
+    private boolean isEditing = false; 
+
     public QuanLyNhapKho() {
         nhapKhoDAO = new DAO_NhapKho();
         chiTietDAO = new DAO_ChiTietNhapKho();
@@ -83,8 +86,8 @@ public class QuanLyNhapKho extends JPanel {
     }
     
     private void applyPermissions() {
-        // ... (Không thay đổi) ...
-        if (btnXoaNK == null || btnThemNCC == null) return; 
+        // === SỬA ĐỔI: Kiểm tra thêm btnSuaNK ===
+        if (btnXoaNK == null || btnThemNCC == null || btnSuaNK == null) return; 
 
         if (currentUser != null) {
             String roleId = "";
@@ -93,21 +96,24 @@ public class QuanLyNhapKho extends JPanel {
             } catch (Exception e) {
             }
             
+            // === SỬA ĐỔI: Chỉ Admin (PQ001) mới thấy nút Sửa ===
             if ("PQ001".equalsIgnoreCase(roleId)) {
                 btnXoaNK.setVisible(true); 
                 btnThemNCC.setVisible(true); 
+                btnSuaNK.setVisible(true); // Admin thấy nút sửa
             } else {
                 btnXoaNK.setVisible(false); 
                 btnThemNCC.setVisible(false); 
+                btnSuaNK.setVisible(false); // Nhân viên không thấy
             }
         } else {
             btnXoaNK.setVisible(false);
             btnThemNCC.setVisible(false);
+            btnSuaNK.setVisible(false);
         }
     }
     
     private JPanel createTitlePanel() {
-        // ... (Không thay đổi) ...
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(new Color(236, 240, 241));
 
@@ -145,7 +151,6 @@ public class QuanLyNhapKho extends JPanel {
     }
     
     private JPanel createMainPanel() {
-        // ... (Không thay đổi) ...
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(new Color(236, 240, 241));
         
@@ -161,7 +166,6 @@ public class QuanLyNhapKho extends JPanel {
     }
     
     private JPanel createNhapKhoPanel() {
-        // ... (Không thay đổi) ...
         JPanel mainPanel = new JPanel(new BorderLayout(5, 5));
         mainPanel.setBackground(Color.WHITE);
         mainPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -173,7 +177,7 @@ public class QuanLyNhapKho extends JPanel {
         headerPanel.setBackground(new Color(39, 174, 96));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
 
-        JLabel lblHeader = new JLabel("TẠO PHIẾU NHẬP KHO MỚI", SwingConstants.CENTER);
+        JLabel lblHeader = new JLabel("THÔNG TIN PHIẾU NHẬP", SwingConstants.CENTER); // Sửa tiêu đề cho phù hợp cả 2 TH
         lblHeader.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblHeader.setForeground(Color.WHITE);
         headerPanel.add(lblHeader, BorderLayout.NORTH);
@@ -215,7 +219,6 @@ public class QuanLyNhapKho extends JPanel {
 
     
     private JPanel createThongTinNKPanel() {
-        // ... (Không thay đổi) ...
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createTitledBorder("Thông tin phiếu nhập kho"));
@@ -271,21 +274,18 @@ public class QuanLyNhapKho extends JPanel {
         tableChiTiet.setRowHeight(25);
         tableChiTiet.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
 
-        // <<< SỬA: THÊM 3 DÒNG SAU ĐỂ HIỂN THỊ BẢNG >>>
         JScrollPane scrollPane = new JScrollPane(tableChiTiet);
-        scrollPane.setPreferredSize(new Dimension(0, 150)); // Đặt chiều cao cho bảng
+        scrollPane.setPreferredSize(new Dimension(0, 150)); 
         panel.add(scrollPane, BorderLayout.CENTER); 
-        // ===============================================
         
-        JPanel btnPanel = new JPanel(new BorderLayout(10, 0)); // 10px Hgap
+        JPanel btnPanel = new JPanel(new BorderLayout(10, 0)); 
         btnPanel.setBackground(Color.WHITE);
-        btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0)); // Đệm ở trên
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0)); 
         
-        // 2. Tạo Panel TÌM KIẾM (Bên trái - WEST)
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         searchPanel.setBackground(Color.WHITE);
 
-        txtTimKiemSP = new JTextField(10); // Kích thước 10
+        txtTimKiemSP = new JTextField(10); 
         txtTimKiemSP.setToolTipText("Nhập tên hoặc mã sản phẩm...");
         
         JButton btnTimSP = createStyledButton("Tìm", new Color(52, 152, 219));
@@ -309,11 +309,9 @@ public class QuanLyNhapKho extends JPanel {
         searchPanel.add(txtTimKiemSP);
         searchPanel.add(btnTimSP);
 
-        // 3. Nút Xóa (Bên phải - EAST)
         btnXoaSP = createStyledButton("Xóa sản phẩm", new Color(231, 76, 60));
         btnXoaSP.addActionListener(e -> xoaSanPhamKhoiNK());
         
-        // 4. Thêm vào panel chính
         btnPanel.add(searchPanel, BorderLayout.WEST);
         btnPanel.add(btnXoaSP, BorderLayout.EAST);
         
@@ -323,7 +321,6 @@ public class QuanLyNhapKho extends JPanel {
     }
     
     private JPanel createSanPhamPanel() {
-        // ... (Không thay đổi) ...
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createTitledBorder("Danh sách sản phẩm"));
@@ -377,7 +374,6 @@ public class QuanLyNhapKho extends JPanel {
     }
     
     private JPanel createTongTienPanel() {
-        // ... (Không thay đổi) ...
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
@@ -486,16 +482,18 @@ public class QuanLyNhapKho extends JPanel {
         tableNhapKho.getTableHeader().setBackground(new Color(52, 73, 94));
         tableNhapKho.getTableHeader().setForeground(Color.WHITE);
         
-        // === SỬA ĐỔI: Bỏ Double-Click, đổi thành Single-Click ===
         tableNhapKho.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 int row = tableNhapKho.getSelectedRow();
                 if (row != -1) {
-                    // Kích hoạt các nút khi một hàng được chọn
                     btnXemChiTietNK.setEnabled(true);
                     btnXacNhan.setEnabled(true);
                     if (btnXoaNK.isVisible()) {
                         btnXoaNK.setEnabled(true);
+                    }
+                    // === THÊM MỚI: Bật nút Sửa nếu đang hiển thị ===
+                    if (btnSuaNK.isVisible()) {
+                        btnSuaNK.setEnabled(true);
                     }
                 }
             }
@@ -504,27 +502,35 @@ public class QuanLyNhapKho extends JPanel {
         JScrollPane scrollPane = new JScrollPane(tableNhapKho);
         panel.add(scrollPane, BorderLayout.CENTER);
         
-        // === SỬA ĐỔI: Thêm nút Xem Chi Tiết ===
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         bottomPanel.setBackground(Color.WHITE);
         
         btnXemChiTietNK = createStyledButton("Chi tiết phiếu nhập", new Color(149, 165, 166));
         btnXemChiTietNK.setPreferredSize(new Dimension(150, 35));
         btnXemChiTietNK.addActionListener(e -> moDialogChiTietNK());
-        btnXemChiTietNK.setEnabled(false); // Mặc định tắt
+        btnXemChiTietNK.setEnabled(false); 
         bottomPanel.add(btnXemChiTietNK);
+        
+        // === THÊM MỚI: Nút Sửa phiếu (Chỉ hiện cho Admin) ===
+        btnSuaNK = createStyledButton("Sửa phiếu", new Color(243, 156, 18)); // Màu cam
+        btnSuaNK.setPreferredSize(new Dimension(120, 35));
+        btnSuaNK.addActionListener(e -> suaPhieuNhapKho());
+        btnSuaNK.setVisible(false); // Mặc định ẩn
+        btnSuaNK.setEnabled(false); // Mặc định tắt
+        bottomPanel.add(btnSuaNK);
+        // =================================================
         
         btnXoaNK = createStyledButton("Xóa phiếu", new Color(231, 76, 60));
         btnXoaNK.setPreferredSize(new Dimension(150, 35));
         btnXoaNK.addActionListener(e -> xoaPhieuNhapKho());
         btnXoaNK.setVisible(false); 
-        btnXoaNK.setEnabled(false); // Mặc định tắt
+        btnXoaNK.setEnabled(false); 
         bottomPanel.add(btnXoaNK);
         
         btnXacNhan = createStyledButton("Xác nhận nhập kho", new Color(39, 174, 96));
         btnXacNhan.setPreferredSize(new Dimension(180, 35));
         btnXacNhan.addActionListener(e -> xacNhanNhapKho());
-        btnXacNhan.setEnabled(false); // Mặc định tắt
+        btnXacNhan.setEnabled(false); 
         bottomPanel.add(btnXacNhan);
         
         panel.add(bottomPanel, BorderLayout.SOUTH);
@@ -533,7 +539,6 @@ public class QuanLyNhapKho extends JPanel {
     }
     
     private void setFormTaoNKEnabled(boolean enabled) {
-        // ... (Không thay đổi) ...
         cboNhaCungCap.setEnabled(enabled); 
         txtSoLuong.setEnabled(enabled);
         txtGiaNhap.setEnabled(enabled);
@@ -543,14 +548,15 @@ public class QuanLyNhapKho extends JPanel {
         btnHuyNK.setEnabled(enabled);
         btnTaoMoi.setEnabled(!enabled);
         
-        // === THÊM MỚI: Vô hiệu hóa các nút khi tạo phiếu mới ===
+        // Vô hiệu hóa các nút danh sách khi đang nhập liệu
         btnXemChiTietNK.setEnabled(false);
         btnXacNhan.setEnabled(false);
         btnXoaNK.setEnabled(false);
+        // === THÊM MỚI: Khóa nút sửa khi đang nhập liệu ===
+        if (btnSuaNK != null) btnSuaNK.setEnabled(false);
     }
     
     private JButton createStyledButton(String text, Color bgColor) {
-        // ... (Không thay đổi) ...
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btn.setBackground(bgColor);
@@ -572,14 +578,15 @@ public class QuanLyNhapKho extends JPanel {
     }
     
     private void taoPhieuNhapKhoMoi() {
-        // ... (Không thay đổi) ...
+        isEditing = false; // === QUAN TRỌNG: Đặt cờ là tạo mới ===
+
         currentNhapKhoId = generateNextNhapKhoId();
         txtIdNK.setText(currentNhapKhoId);
         
         if (currentUser != null) {
             txtIdNV.setText(currentUser.getIdNV());
         } else {
-            txtIdNV.setText("NV001"); // Fallback
+            txtIdNV.setText("NV001"); 
         }
         
         cboNhaCungCap.setSelectedIndex(-1); 
@@ -601,7 +608,6 @@ public class QuanLyNhapKho extends JPanel {
     }
     
     private String generateNextNhapKhoId() {
-        // ... (Không thay đổi) ...
         List<NhapKho> list = nhapKhoDAO.getAll();
         int maxId = 0;
         
@@ -620,7 +626,6 @@ public class QuanLyNhapKho extends JPanel {
     }
     
     private void loadComboBoxNCC() {
-        // ... (Không thay đổi) ...
         if (nhaCungCapDAO == null) {
             nhaCungCapDAO = new DAO_NhaCungCap();
         }
@@ -640,7 +645,6 @@ public class QuanLyNhapKho extends JPanel {
     }
 
     private void moDialogThemNCC() {
-        // ... (Không thay đổi) ...
         JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
         JDialog dialog = new JDialog(topFrame, "Thêm Nhà Cung Cấp Mới", true);
         dialog.setSize(500, 420); 
@@ -736,12 +740,10 @@ public class QuanLyNhapKho extends JPanel {
 
         btnHuy.addActionListener(e -> dialog.dispose());
         
-// ... trong phương thức private void moDialogThemNCC() ...
-        
         btnLuu.addActionListener(e -> {
             String ten = txtTen.getText().trim();
             String sdt = txtSDT.getText().trim();
-            String email = txtEmail.getText().trim(); // Lấy giá trị Email
+            String email = txtEmail.getText().trim(); 
             String diaChi = txtDiaChi.getText().trim();
             
             if (ten.isEmpty() || sdt.isEmpty()) {
@@ -749,7 +751,6 @@ public class QuanLyNhapKho extends JPanel {
                 return;
             }
             
-            // === THÊM RÀNG BUỘC SỐ ĐIỆN THOẠI ===
             if (!sdt.matches("\\d{10}")) {
                 JOptionPane.showMessageDialog(dialog, 
                     "Số điện thoại không hợp lệ! Phải có đúng 10 chữ số.", 
@@ -758,8 +759,6 @@ public class QuanLyNhapKho extends JPanel {
                 return;
             }
             
-            // === THÊM RÀNG BUỘC EMAIL (Nếu có nhập) ===
-            // Regex cơ bản: chấp nhận chữ/số + @ + chữ/số + . + 2-6 ký tự cuối
             String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$";
             if (!email.isEmpty() && !email.matches(emailRegex)) {
                 JOptionPane.showMessageDialog(dialog, 
@@ -772,8 +771,8 @@ public class QuanLyNhapKho extends JPanel {
             String newId = nhaCungCapDAO.generateNextId(); 
             NhaCungCap newNCC = new NhaCungCap(
                 newId, ten, sdt,
-                email, // Sử dụng biến email đã trim
-                diaChi, // Sử dụng biến diaChi đã trim
+                email, 
+                diaChi, 
                 "Hoạt động" 
             );
             
@@ -795,7 +794,6 @@ public class QuanLyNhapKho extends JPanel {
     }
     
     private void themSanPhamVaoNK() {
-        // ... (Không thay đổi) ...
         if (currentNhapKhoId.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng tạo phiếu nhập kho mới trước!",
                 "Cảnh báo", JOptionPane.WARNING_MESSAGE);
@@ -861,22 +859,19 @@ public class QuanLyNhapKho extends JPanel {
         }
 
         try {
-            // Lấy thông tin hiện tại của dòng
             int currentSoLuong = Integer.parseInt(modelChiTiet.getValueAt(row, 2).toString());
             String giaNhapStr = modelChiTiet.getValueAt(row, 3).toString().replace(",", "").replace(" đ", "");
             float giaNhap = Float.parseFloat(giaNhapStr);
             String tenSP = modelChiTiet.getValueAt(row, 1).toString();
 
-            // Hỏi người dùng số lượng muốn xóa
             String input = JOptionPane.showInputDialog(this, 
                 "Sản phẩm: " + tenSP + "\nHiện có: " + currentSoLuong + "\nNhập số lượng muốn xóa:", 
-                currentSoLuong); // Mặc định hiển thị số lượng max
+                currentSoLuong); 
 
-            if (input == null) return; // Người dùng ấn Cancel
+            if (input == null) return; 
 
             int xoaSoLuong = Integer.parseInt(input.trim());
 
-            // Validate dữ liệu nhập
             if (xoaSoLuong <= 0) {
                 JOptionPane.showMessageDialog(this, "Số lượng xóa phải lớn hơn 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
@@ -886,22 +881,18 @@ public class QuanLyNhapKho extends JPanel {
                 return;
             }
 
-            // Tính toán tiền cần trừ
             float tienTru = xoaSoLuong * giaNhap;
 
             if (xoaSoLuong == currentSoLuong) {
-                // Trường hợp 1: Xóa hết -> Xóa dòng
                 modelChiTiet.removeRow(row);
             } else {
-                // Trường hợp 2: Xóa một phần -> Cập nhật lại dòng
                 int soLuongMoi = currentSoLuong - xoaSoLuong;
                 float thanhTienMoi = soLuongMoi * giaNhap;
                 
-                modelChiTiet.setValueAt(soLuongMoi, row, 2); // Cập nhật cột Số lượng
-                modelChiTiet.setValueAt(df.format(thanhTienMoi) + " đ", row, 4); // Cập nhật cột Thành tiền
+                modelChiTiet.setValueAt(soLuongMoi, row, 2); 
+                modelChiTiet.setValueAt(df.format(thanhTienMoi) + " đ", row, 4); 
             }
 
-            // Cập nhật tổng tiền phiếu nhập
             tongTienNK -= tienTru;
             updateTongTien();
 
@@ -911,12 +902,74 @@ public class QuanLyNhapKho extends JPanel {
     }
     
     private void updateTongTien() {
-        // ... (Không thay đổi) ...
         lblTongTien.setText(df.format(tongTienNK) + " đ");
     }
     
+    // === THÊM MỚI: Hàm Sửa Phiếu Nhập Kho ===
+    private void suaPhieuNhapKho() {
+        int row = tableNhapKho.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn phiếu cần sửa!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String trangThai = tableNhapKho.getValueAt(row, 5).toString();
+        if (!"Chờ xác nhận".equalsIgnoreCase(trangThai)) {
+            JOptionPane.showMessageDialog(this, "Chỉ được sửa phiếu ở trạng thái 'Chờ xác nhận'!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String idNK = tableNhapKho.getValueAt(row, 0).toString();
+        String idNCC = tableNhapKho.getValueAt(row, 2).toString();
+        String idNV = tableNhapKho.getValueAt(row, 1).toString();
+
+        // 1. Đặt trạng thái là ĐANG SỬA
+        isEditing = true;
+        currentNhapKhoId = idNK;
+        txtIdNK.setText(idNK);
+        txtIdNV.setText(idNV); // Load lại NV tạo phiếu
+        
+        // 2. Load Nhà Cung Cấp lên ComboBox
+        for (int i = 0; i < cboNhaCungCap.getItemCount(); i++) {
+            NhaCungCap ncc = cboNhaCungCap.getItemAt(i);
+            if (ncc.getIdNCC().equals(idNCC)) {
+                cboNhaCungCap.setSelectedIndex(i);
+                break;
+            }
+        }
+
+        // 3. Load Chi Tiết Phiếu Nhập lên Bảng Chi Tiết
+        modelChiTiet.setRowCount(0);
+        List<ChiTietNhapKho> listCT = chiTietDAO.getByNhapKho(idNK);
+        tongTienNK = 0;
+
+        if (listCT != null) {
+            for (ChiTietNhapKho ct : listCT) {
+                Giay giay = giayDAO.getById(ct.getIdGiay());
+                String tenGiay = (giay != null) ? giay.getTenGiay() : "Unknown";
+                
+                modelChiTiet.addRow(new Object[]{
+                    ct.getIdGiay(),
+                    tenGiay,
+                    ct.getSoLuong(),
+                    df.format(ct.getGiaNhap()) + " đ",
+                    df.format(ct.getThanhTien()) + " đ"
+                });
+                tongTienNK += ct.getThanhTien();
+            }
+        }
+        updateTongTien();
+
+        // 4. Bật Form lên để sửa
+        setFormTaoNKEnabled(true);
+        
+        // Khóa nút sửa để tránh bấm 2 lần
+        btnSuaNK.setEnabled(false); 
+        
+        JOptionPane.showMessageDialog(this, "Đang sửa phiếu: " + idNK + ".\nHãy cập nhật thông tin và nhấn 'Lưu phiếu tạm'.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+    }
+
     private void luuPhieuNhapKho() {
-        // ... (Không thay đổi) ...
         if (currentNhapKhoId.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng tạo phiếu nhập kho mới!",
                 "Cảnh báo", JOptionPane.WARNING_MESSAGE);
@@ -947,8 +1000,39 @@ public class QuanLyNhapKho extends JPanel {
             nk.setTongTien(tongTienNK);
             nk.setStatus("Chờ xác nhận"); 
             
-            if (nhapKhoDAO.insert(nk)) {
-                int ctnkCount = chiTietDAO.getAll().size() + 1;
+            boolean success = false;
+
+            if (isEditing) {
+                // === LOGIC CẬP NHẬT (UPDATE) ===
+                if (nhapKhoDAO.update(nk)) {
+                    // 1. Xóa hết chi tiết cũ
+                    chiTietDAO.deleteByNhapKhoId(currentNhapKhoId);
+                    // 2. Success = true để xuống dưới insert lại chi tiết mới
+                    success = true;
+                }
+            } else {
+                // === LOGIC TẠO MỚI (INSERT) ===
+                if (nhapKhoDAO.insert(nk)) {
+                    success = true;
+                }
+            }
+
+            if (success) {
+                // === LƯU CHI TIẾT (Dùng chung cho cả Thêm và Sửa) ===
+                int ctnkCount = 1;
+                // Lấy max ID CTNK để tránh trùng
+                List<ChiTietNhapKho> allCT = chiTietDAO.getAll();
+                int maxIdCT = 0;
+                if (allCT != null) {
+                    for(ChiTietNhapKho ct : allCT) {
+                         String idStr = ct.getIdCTNK().replace("CTNK", "");
+                         try {
+                             int idNum = Integer.parseInt(idStr);
+                             if(idNum > maxIdCT) maxIdCT = idNum;
+                         } catch(Exception ex){}
+                    }
+                }
+                ctnkCount = maxIdCT + 1;
                 
                 for (int i = 0; i < modelChiTiet.getRowCount(); i++) {
                     ChiTietNhapKho ctnk = new ChiTietNhapKho();
@@ -969,19 +1053,11 @@ public class QuanLyNhapKho extends JPanel {
                     chiTietDAO.insert(ctnk);
                 }
                 
-                JOptionPane.showMessageDialog(this, 
-                    "Lưu phiếu nhập kho tạm thành công!\nMã phiếu: " + currentNhapKhoId + 
-                    "\nTrạng thái: Chờ xác nhận",
-                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                String msg = isEditing ? "Cập nhật phiếu nhập thành công!" : "Lưu phiếu nhập kho tạm thành công!";
+                JOptionPane.showMessageDialog(this, msg, "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 
-                currentNhapKhoId = "";
-                txtIdNK.setText("");
-                cboNhaCungCap.setSelectedIndex(-1); 
-                modelChiTiet.setRowCount(0);
-                tongTienNK = 0;
-                updateTongTien();
-                
-                setFormTaoNKEnabled(false);
+                // Reset form
+                resetFormSauKhiLuu();
                 loadDanhSachNhapKho(false); 
             } else {
                  JOptionPane.showMessageDialog(this, "Lỗi khi lưu phiếu nhập kho!",
@@ -995,7 +1071,6 @@ public class QuanLyNhapKho extends JPanel {
     }
     
     private void huyPhieuNhapKho() {
-        // ... (Không thay đổi) ...
         if (currentNhapKhoId.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Không có phiếu nhập kho nào để hủy!",
                 "Cảnh báo", JOptionPane.WARNING_MESSAGE);
@@ -1003,26 +1078,30 @@ public class QuanLyNhapKho extends JPanel {
         }
         
         int choice = JOptionPane.showConfirmDialog(this,
-            "Bạn có chắc muốn hủy phiếu nhập kho tạm này?",
+            isEditing ? "Bạn có chắc muốn hủy bỏ thay đổi?" : "Bạn có chắc muốn hủy phiếu nhập kho tạm này?",
             "Xác nhận", JOptionPane.YES_NO_OPTION);
         
         if (choice == JOptionPane.YES_OPTION) {
-            currentNhapKhoId = "";
-            txtIdNK.setText("");
-            cboNhaCungCap.setSelectedIndex(-1); 
-            modelChiTiet.setRowCount(0);
-            tongTienNK = 0;
-            updateTongTien();
-            
-            setFormTaoNKEnabled(false);
-            
-            JOptionPane.showMessageDialog(this, "Đã hủy phiếu nhập kho tạm!",
+            resetFormSauKhiLuu(); // Gọi hàm reset chung
+            JOptionPane.showMessageDialog(this, "Đã hủy thao tác!",
                 "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         }
     }
+
+    // Hàm phụ trợ để reset form
+    private void resetFormSauKhiLuu() {
+        isEditing = false; // Reset cờ
+        currentNhapKhoId = "";
+        txtIdNK.setText("");
+        cboNhaCungCap.setSelectedIndex(-1); 
+        modelChiTiet.setRowCount(0);
+        tongTienNK = 0;
+        updateTongTien();
+        setFormTaoNKEnabled(false);
+        tableNhapKho.clearSelection(); 
+    }
     
     private void xacNhanNhapKho() {
-        // ... (Không thay đổi) ...
         int row = tableNhapKho.getSelectedRow();
         if (row == -1) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn phiếu nhập kho cần xác nhận!",
@@ -1086,7 +1165,6 @@ public class QuanLyNhapKho extends JPanel {
     }
     
     private void xoaPhieuNhapKho() {
-        // ... (Không thay đổi) ...
         int row = tableNhapKho.getSelectedRow();
         if (row == -1) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn phiếu nhập kho cần xóa!",
@@ -1132,7 +1210,6 @@ public class QuanLyNhapKho extends JPanel {
     }
     
     private void loadDanhSachNhapKho(boolean showMessage) {
-        // ... (Không thay đổi) ...
         modelNhapKho.setRowCount(0);
         
         String statusFilter = "Tất cả";
@@ -1190,12 +1267,10 @@ public class QuanLyNhapKho extends JPanel {
     }
 
     private void loadDanhSachNhapKho() {
-        // ... (Không thay đổi) ...
         loadDanhSachNhapKho(false);
     }
     
     private void loadDanhSachSanPham(boolean showMessage) {
-        // ... (Không thay đổi) ...
         modelSanPham.setRowCount(0);
         
         String keyword = "";
@@ -1240,11 +1315,9 @@ public class QuanLyNhapKho extends JPanel {
     }
     
     private void loadDanhSachSanPham() {
-        // ... (Không thay đổi) ...
         loadDanhSachSanPham(false); 
     }
     
-    // === THÊM MỚI: Hàm mở Dialog Chi Tiết ===
     private void moDialogChiTietNK() {
         int row = tableNhapKho.getSelectedRow();
         if (row == -1) {
@@ -1255,7 +1328,6 @@ public class QuanLyNhapKho extends JPanel {
         
         String idNK = tableNhapKho.getValueAt(row, 0).toString();
         
-        // Tạo và hiển thị dialog
         ChiTietNhapKhoDialog dialog = new ChiTietNhapKhoDialog(
             (JFrame) SwingUtilities.getWindowAncestor(this), 
             idNK
@@ -1263,18 +1335,16 @@ public class QuanLyNhapKho extends JPanel {
         dialog.setVisible(true);
     }
     
-    // === THÊM MỚI: Lớp Dialog lồng bên trong ===
     class ChiTietNhapKhoDialog extends JDialog {
         private DefaultTableModel modelChiTietDialog;
         
         public ChiTietNhapKhoDialog(JFrame parent, String idNK) {
-            super(parent, "Chi Tiết Phiếu Nhập Kho: " + idNK, true); // true = modal
+            super(parent, "Chi Tiết Phiếu Nhập Kho: " + idNK, true); 
             
             setSize(750, 600);
             setLocationRelativeTo(parent);
             setLayout(new BorderLayout(10, 10));
             
-            // Lấy dữ liệu
             NhapKho nk = nhapKhoDAO.getById(idNK);
             if (nk == null) {
                 JOptionPane.showMessageDialog(this, "Không thể tìm thấy phiếu nhập " + idNK, "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -1286,7 +1356,6 @@ public class QuanLyNhapKho extends JPanel {
             NhaCungCap ncc = nhaCungCapDAO.getById(nk.getIdNCC());
             List<ChiTietNhapKho> listCT = chiTietDAO.getByNhapKho(idNK);
 
-            // 1. Panel Thông Tin Chung (NORTH)
             JPanel infoPanel = new JPanel(new GridBagLayout());
             infoPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder("Thông tin chung"),
@@ -1296,7 +1365,6 @@ public class QuanLyNhapKho extends JPanel {
             gbc.fill = GridBagConstraints.HORIZONTAL;
             gbc.insets = new Insets(4, 5, 4, 5);
             
-            // Hàng 1
             gbc.gridx = 0; gbc.gridy = 0;
             infoPanel.add(new JLabel("Mã phiếu nhập kho:"), gbc);
             gbc.gridx = 1;
@@ -1307,7 +1375,6 @@ public class QuanLyNhapKho extends JPanel {
             gbc.gridx = 3;
             infoPanel.add(createReadOnlyTextField(sdf.format(nk.getNgayNhap())), gbc);
             
-            // Hàng 2
             gbc.gridx = 0; gbc.gridy = 1;
             infoPanel.add(new JLabel("Nhân viên:"), gbc);
             gbc.gridx = 1;
@@ -1318,15 +1385,13 @@ public class QuanLyNhapKho extends JPanel {
             gbc.gridx = 3;
             infoPanel.add(createReadOnlyTextField(nk.getStatus()), gbc);
             
-            // Hàng 3
             gbc.gridx = 0; gbc.gridy = 2;
             infoPanel.add(new JLabel("Nhà cung cấp:"), gbc);
-            gbc.gridx = 1; gbc.gridwidth = 3; // Cho NCC chiếm 3 cột
+            gbc.gridx = 1; gbc.gridwidth = 3; 
             infoPanel.add(createReadOnlyTextField(ncc != null ? ncc.getTenNCC() + " (" + ncc.getIdNCC() + ")" : nk.getIdNCC()), gbc);
 
             add(infoPanel, BorderLayout.NORTH);
 
-            // 2. Panel Chi Tiết Sản Phẩm (CENTER)
             String[] columns = {"Mã sản phẩm", "Tên sản phẩm", "Số lượng", "Giá nhập", "Thành tiền"};
             modelChiTietDialog = new DefaultTableModel(columns, 0) {
                 @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -1336,7 +1401,6 @@ public class QuanLyNhapKho extends JPanel {
             tableChiTietDialog.setRowHeight(25);
             tableChiTietDialog.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
             
-            // Đổ dữ liệu vào bảng
             if (listCT != null) {
                 for (ChiTietNhapKho ct : listCT) {
                     Giay giay = giayDAO.getById(ct.getIdGiay());
@@ -1355,7 +1419,6 @@ public class QuanLyNhapKho extends JPanel {
             scrollPane.setBorder(BorderFactory.createTitledBorder("Chi tiết sản phẩm nhập"));
             add(scrollPane, BorderLayout.CENTER);
 
-            // 3. Panel Tổng Tiền và Nút Đóng (SOUTH)
             JPanel southPanel = new JPanel(new BorderLayout());
             southPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
             
@@ -1373,7 +1436,6 @@ public class QuanLyNhapKho extends JPanel {
             add(southPanel, BorderLayout.SOUTH);
         }
         
-        // Helper
         private JTextField createReadOnlyTextField(String text) {
             JTextField txt = new JTextField(text);
             txt.setEditable(false);

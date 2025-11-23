@@ -25,12 +25,9 @@ import org.jfree.chart.plot.Plot;
 import org.jfree.chart.block.BlockBorder;
 import java.awt.BasicStroke;
 import java.awt.Paint;
-
-// <<< SỬA: THÊM CÁC IMPORT ĐỂ ĐỊNH DẠNG SỐ (BỎ E7) >>>
 import java.text.NumberFormat;
 import java.text.FieldPosition;
 import java.text.ParsePosition;
-// =====================================================
 
 public class QuanLyThongKe extends JPanel {
     private JTable tableThongKe;
@@ -53,33 +50,29 @@ public class QuanLyThongKe extends JPanel {
 
     private NhanVien currentUser;
 
-    // ==========================================================
-    // == CÁC BIẾN MỚI CHO CARDLAYOUT VÀ DASHBOARD
-    // ==========================================================
-    private JPanel centerContentPanel; // Panel chính ở giữa dùng CardLayout
+    // CardLayout variables
+    private JPanel centerContentPanel; 
     private CardLayout centerCardLayout;
-    private JScrollPane tableScrollPane; // Bảng chi tiết (dùng chung)
-    private JPanel dashboardPanel; // Panel cho 4 biểu đồ tổng quan
-    private int currentViewIndex = 0; // 0 = Dashboard, 1 = Doanh thu ngày, ...
+    private JScrollPane tableScrollPane; 
+    private JPanel dashboardPanel; 
+    private int currentViewIndex = 0; 
 
-    // --- CÁC PANEL CHI TIẾT MỚI (CHỨA BIỂU ĐỒ + BẢNG) ---
+    // Detail panels
     private JPanel pnDetailDoanhThuNgay;
     private JPanel pnDetailDoanhThuThang;
     private JPanel pnDetailSanPhamBanChay;
     private JPanel pnDetailNhapHang;
     private JPanel pnDetailTopKhachHang;
-    private JPanel pnBaoCaoTongHop; // <<< SỬA: THÊM PANEL CHO BÁO CÁO TỔNG HỢP
+    private JPanel pnBaoCaoTongHop; 
 
-    // --- CÁC HẰNG SỐ CHO CARDLAYOUT ---
+    // Constants
     private static final String VIEW_DASHBOARD = "DASHBOARD";
     private static final String VIEW_DT_NGAY = "VIEW_DT_NGAY";
     private static final String VIEW_DT_THANG = "VIEW_DT_THANG";
     private static final String VIEW_SP_CHAY = "VIEW_SP_CHAY";
     private static final String VIEW_NHAP_HANG = "VIEW_NHAP_HANG";
     private static final String VIEW_TOP_KH = "VIEW_TOP_KH";
-    private static final String VIEW_BAO_CAO_TH = "VIEW_BAO_CAO_TH"; // <<< SỬA: THÊM HẰNG SỐ
-    // ==========================================================
-
+    private static final String VIEW_BAO_CAO_TH = "VIEW_BAO_CAO_TH"; 
 
     public QuanLyThongKe() {
         hoaDonDAO = new DAO_HoaDon();
@@ -96,7 +89,6 @@ public class QuanLyThongKe extends JPanel {
         add(createTitlePanel(), BorderLayout.NORTH);
         add(createMainPanel(), BorderLayout.CENTER);
 
-        // Tải dữ liệu dashboard khi vừa mở
         SwingUtilities.invokeLater(() -> {
             hienThiDashboard();
         });
@@ -106,8 +98,6 @@ public class QuanLyThongKe extends JPanel {
         this();
         this.currentUser = user;
     }
-
-    // ... (createTitlePanel, createMainPanel, createMenuPanel, createMenuButton, createFilterPanel, createSummaryCard, createStyledButton giữ nguyên) ...
     
     private JPanel createTitlePanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -154,74 +144,74 @@ public class QuanLyThongKe extends JPanel {
         return panel;
     }
 
-	private JPanel createMenuPanel() {
-	    JPanel panel = new JPanel();
-	    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-	    panel.setBackground(Color.WHITE);
-	    panel.setBorder(BorderFactory.createCompoundBorder(
-	        BorderFactory.createLineBorder(new Color(189, 195, 199), 1),
-	        BorderFactory.createEmptyBorder(15, 15, 15, 15)
-	    ));
-	    panel.setPreferredSize(new Dimension(250, 0));
-	
-	    JLabel lblMenu = new JLabel("DANH MỤC THỐNG KÊ");
-	    lblMenu.setFont(new Font("Segoe UI", Font.BOLD, 14));
-	    lblMenu.setAlignmentX(Component.CENTER_ALIGNMENT);
-	    panel.add(lblMenu);
-	    panel.add(Box.createRigidArea(new Dimension(0, 20)));
-	
-	    String[] menuItems = {
-	        "Tổng quan",
-	        "Doanh thu theo ngày",
-	        "Doanh thu theo tháng",
-	        "Sản phẩm bán chạy",
-	        "Nhập hàng",
-	        "Top khách hàng",
-	        "Báo cáo tổng hợp"
-	    };
-	
-	    Color[] colors = {
-	        new Color(26, 188, 156),  // Teal
-	        new Color(46, 204, 113),  // Green
-	        new Color(52, 152, 219),  // Blue
-	        new Color(241, 196, 15),  // Yellow
-	        new Color(230, 126, 34),  // Orange
-	        new Color(155, 89, 182),  // Purple
-	        new Color(231, 76, 60)    // Red
-	    };
-	
-	    for (int i = 0; i < menuItems.length; i++) {
-	        JButton btn = createMenuButton(menuItems[i], colors[i]);
-	        final int index = i;
-	        btn.addActionListener(e -> xuLyChucNang(index));
-	        panel.add(btn);
-	        panel.add(Box.createRigidArea(new Dimension(0, 10)));
-	    }
-	
-	    return panel;
-	}
+    private JPanel createMenuPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(189, 195, 199), 1),
+            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        ));
+        panel.setPreferredSize(new Dimension(250, 0));
+    
+        JLabel lblMenu = new JLabel("DANH MỤC THỐNG KÊ");
+        lblMenu.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblMenu.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(lblMenu);
+        panel.add(Box.createRigidArea(new Dimension(0, 20)));
+    
+        String[] menuItems = {
+            "Tổng quan",
+            "Doanh thu theo ngày",
+            "Doanh thu theo tháng",
+            "Sản phẩm bán chạy",
+            "Nhập hàng",
+            "Top khách hàng",
+            "Báo cáo tổng hợp"
+        };
+    
+        Color[] colors = {
+            new Color(26, 188, 156),  // Teal
+            new Color(46, 204, 113),  // Green
+            new Color(52, 152, 219),  // Blue
+            new Color(241, 196, 15),  // Yellow
+            new Color(230, 126, 34),  // Orange
+            new Color(155, 89, 182),  // Purple
+            new Color(231, 76, 60)    // Red
+        };
+    
+        for (int i = 0; i < menuItems.length; i++) {
+            JButton btn = createMenuButton(menuItems[i], colors[i]);
+            final int index = i;
+            btn.addActionListener(e -> xuLyChucNang(index));
+            panel.add(btn);
+            panel.add(Box.createRigidArea(new Dimension(0, 10)));
+        }
+    
+        return panel;
+    }
 
-	private JButton createMenuButton(String text, Color bgColor) {
-	    JButton btn = new JButton(text);
-	    btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
-	    btn.setBackground(bgColor);
-	    btn.setForeground(Color.WHITE);
-	    btn.setFocusPainted(false);
-	    btn.setBorderPainted(false);
-	    btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-	    btn.setMaximumSize(new Dimension(220, 45));
-	    btn.setAlignmentX(Component.CENTER_ALIGNMENT);
-	
-	    btn.addMouseListener(new MouseAdapter() {
-	        public void mouseEntered(MouseEvent e) {
-	            btn.setBackground(bgColor.darker());
-	        }
-	        public void mouseExited(MouseEvent e) {
-	            btn.setBackground(bgColor);
-	        }
-	    });
-	    return btn;
-	}
+    private JButton createMenuButton(String text, Color bgColor) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btn.setBackground(bgColor);
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setMaximumSize(new Dimension(220, 45));
+        btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+    
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                btn.setBackground(bgColor.darker());
+            }
+            public void mouseExited(MouseEvent e) {
+                btn.setBackground(bgColor);
+            }
+        });
+        return btn;
+    }
 
     private JPanel createContentPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
@@ -241,16 +231,14 @@ public class QuanLyThongKe extends JPanel {
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createTitledBorder("Bộ lọc"));
 
-        // === 1. TẠO PANEL CHỨA CÁC THÀNH PHẦN CHỌN NGÀY & NÚT LỌC ===
         pnBoLocNgay = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         pnBoLocNgay.setBackground(Color.WHITE);
 
-        // --- Cấu hình Ngày bắt đầu ---
         pnBoLocNgay.add(new JLabel("Từ ngày:"));
         dateFrom = new JDateChooser();
         dateFrom.setDateFormatString("dd/MM/yyyy");
         dateFrom.setPreferredSize(new Dimension(130, 30));
-        dateFrom.setMaxSelectableDate(new Date()); // Chặn ngày tương lai
+        dateFrom.setMaxSelectableDate(new Date());
         
         // Mặc định khi mở lên: Lấy từ 30 ngày trước
         Calendar cal = Calendar.getInstance();
@@ -258,32 +246,25 @@ public class QuanLyThongKe extends JPanel {
         dateFrom.setDate(cal.getTime());
         pnBoLocNgay.add(dateFrom);
 
-        // --- Cấu hình Ngày kết thúc ---
         pnBoLocNgay.add(new JLabel("Đến ngày:"));
         dateTo = new JDateChooser();
         dateTo.setDateFormatString("dd/MM/yyyy");
         dateTo.setPreferredSize(new Dimension(130, 30));
-        dateTo.setMaxSelectableDate(new Date()); // Chặn ngày tương lai
+        dateTo.setMaxSelectableDate(new Date());
         dateTo.setDate(new Date());
         pnBoLocNgay.add(dateTo);
 
-        // --- Nút Lọc dữ liệu ---
         JButton btnLoc = createStyledButton("Lọc dữ liệu", new Color(52, 152, 219));
         btnLoc.addActionListener(e -> locDuLieu());
         pnBoLocNgay.add(btnLoc);
 
-        // Thêm panel con vào panel chính
         panel.add(pnBoLocNgay);
 
-        // === 2. CÁC NÚT CHỨC NĂNG CHUNG ===
-        
-        // <<< SỬA ĐỔI TẠI ĐÂY: GỌI HÀM RESET KHI ẤN LÀM MỚI >>>
         JButton btnLamMoi = createStyledButton("Làm mới", new Color(149, 165, 166));
         btnLamMoi.addActionListener(e -> {
-            resetVaHienThiToanBo(); // Gọi hàm reset ngày và load lại bảng
+            resetVaHienThiToanBo(); 
         });
         panel.add(btnLamMoi);
-        // =======================================================
 
         JButton btnXuatExcel = createStyledButton("Xuất Excel", new Color(46, 204, 113));
         btnXuatExcel.addActionListener(e -> xuatBaoCao());
@@ -292,59 +273,57 @@ public class QuanLyThongKe extends JPanel {
         return panel;
     }
 
-	private JPanel createSummaryCard(String title, String value, Color color, String labelName) {
-	    JPanel card = new JPanel(new BorderLayout(10, 10));
-	    card.setBackground(color);
-	    card.setBorder(BorderFactory.createCompoundBorder(
-	        BorderFactory.createLineBorder(color.darker(), 2),
-	        BorderFactory.createEmptyBorder(15, 15, 15, 15)
-	    ));
-	
-	    JLabel lblTitle = new JLabel(title);
-	    lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-	    lblTitle.setForeground(Color.WHITE);
-	    card.add(lblTitle, BorderLayout.NORTH);
-	
-	    JLabel lblValue = new JLabel(value, SwingConstants.CENTER);
-	    lblValue.setFont(new Font("Segoe UI", Font.BOLD, 24));
-	    lblValue.setForeground(Color.WHITE);
-	    card.add(lblValue, BorderLayout.CENTER);
-	
-	    if (labelName.equals("lblTongDoanhThu")) lblTongDoanhThu = lblValue;
-	    else if (labelName.equals("lblTongDonHang")) lblTongDonHang = lblValue;
-	    else if (labelName.equals("lblTongSoLuong")) lblTongSoLuong = lblValue;
-	
-	    return card;
-	}
+    private JPanel createSummaryCard(String title, String value, Color color, String labelName) {
+        JPanel card = new JPanel(new BorderLayout(10, 10));
+        card.setBackground(color);
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(color.darker(), 2),
+            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        ));
+    
+        JLabel lblTitle = new JLabel(title);
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblTitle.setForeground(Color.WHITE);
+        card.add(lblTitle, BorderLayout.NORTH);
+    
+        JLabel lblValue = new JLabel(value, SwingConstants.CENTER);
+        lblValue.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblValue.setForeground(Color.WHITE);
+        card.add(lblValue, BorderLayout.CENTER);
+    
+        if (labelName.equals("lblTongDoanhThu")) lblTongDoanhThu = lblValue;
+        else if (labelName.equals("lblTongDonHang")) lblTongDonHang = lblValue;
+        else if (labelName.equals("lblTongSoLuong")) lblTongSoLuong = lblValue;
+    
+        return card;
+    }
 
-	private JButton createStyledButton(String text, Color bgColor) {
-	    JButton btn = new JButton(text);
-	    btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
-	    btn.setBackground(bgColor);
-	    btn.setForeground(Color.WHITE);
-	    btn.setFocusPainted(false);
-	    btn.setBorderPainted(false);
-	    btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-	    btn.setPreferredSize(new Dimension(120, 35));
-	
-	    btn.addMouseListener(new MouseAdapter() {
-	        public void mouseEntered(MouseEvent e) {
-	            btn.setBackground(bgColor.darker());
-	        }
-	        public void mouseExited(MouseEvent e) {
-	            btn.setBackground(bgColor);
-	        }
-	    });
-	
-	    return btn;
-	}
-
+    private JButton createStyledButton(String text, Color bgColor) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btn.setBackground(bgColor);
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setPreferredSize(new Dimension(120, 35));
+    
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                btn.setBackground(bgColor.darker());
+            }
+            public void mouseExited(MouseEvent e) {
+                btn.setBackground(bgColor);
+            }
+        });
+    
+        return btn;
+    }
 
     private JPanel createStatsPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(Color.WHITE);
 
-        // 1. Summary cards (Giữ nguyên)
         JPanel summaryPanel = new JPanel(new GridLayout(1, 3, 15, 0));
         summaryPanel.setBackground(Color.WHITE);
         summaryPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
@@ -353,7 +332,6 @@ public class QuanLyThongKe extends JPanel {
         summaryPanel.add(createSummaryCard("Sản phẩm bán", "0", new Color(241, 196, 15), "lblTongSoLuong"));
         panel.add(summaryPanel, BorderLayout.NORTH);
 
-        // 2. Tạo JTable và JScrollPane (sẽ được dùng chung)
         String[] columns = {"Số thứ tự", "Thông tin", "Giá trị"};
         modelThongKe = new DefaultTableModel(columns, 0) {
             @Override
@@ -365,53 +343,42 @@ public class QuanLyThongKe extends JPanel {
         tableThongKe.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
         tableThongKe.getTableHeader().setBackground(new Color(52, 73, 94));
         tableThongKe.getTableHeader().setForeground(Color.WHITE);
-        tableScrollPane = new JScrollPane(tableThongKe); // Lưu vào biến thành viên
+        tableScrollPane = new JScrollPane(tableThongKe); 
 
-        // 3. Tạo Panel chứa CardLayout
         centerCardLayout = new CardLayout();
         centerContentPanel = new JPanel(centerCardLayout);
 
-        // 4. Tạo các panel "con" và thêm vào CardLayout
-        
-        // 4a. Dashboard
         dashboardPanel = createDashboardPanel(); 
         centerContentPanel.add(dashboardPanel, VIEW_DASHBOARD);
 
-        // 4b. Các panel chi tiết (mỗi panel có BorderLayout để chứa Chart + Table)
         pnDetailDoanhThuNgay = new JPanel(new BorderLayout(5, 5));
         pnDetailDoanhThuThang = new JPanel(new BorderLayout(5, 5));
         pnDetailSanPhamBanChay = new JPanel(new BorderLayout(5, 5));
         pnDetailNhapHang = new JPanel(new BorderLayout(5, 5));
         pnDetailTopKhachHang = new JPanel(new BorderLayout(5, 5));
-        pnBaoCaoTongHop = new JPanel(new BorderLayout(5, 5)); // <<< SỬA: KHỞI TẠO PANEL MỚI
+        pnBaoCaoTongHop = new JPanel(new BorderLayout(5, 5)); 
 
         centerContentPanel.add(pnDetailDoanhThuNgay, VIEW_DT_NGAY);
         centerContentPanel.add(pnDetailDoanhThuThang, VIEW_DT_THANG);
         centerContentPanel.add(pnDetailSanPhamBanChay, VIEW_SP_CHAY);
         centerContentPanel.add(pnDetailNhapHang, VIEW_NHAP_HANG);
         centerContentPanel.add(pnDetailTopKhachHang, VIEW_TOP_KH);
-        centerContentPanel.add(pnBaoCaoTongHop, VIEW_BAO_CAO_TH); // <<< SỬA: THÊM PANEL MỚI VÀO CARDLAYOUT
+        centerContentPanel.add(pnBaoCaoTongHop, VIEW_BAO_CAO_TH); 
 
-        // 5. Thêm CardLayout panel vào chính giữa
         panel.add(centerContentPanel, BorderLayout.CENTER);
     
         return panel;
     }
 
-
     private void xuLyChucNang(int chucNang) {
-        // Lưu lại chức năng đang xem
         this.currentViewIndex = chucNang;
 
-        // === LOGIC ẨN HIỆN BỘ LỌC NGÀY ===
         if (chucNang == 6) {
-            pnBoLocNgay.setVisible(false); // Ẩn chọn ngày nếu là Báo cáo tổng hợp
+            pnBoLocNgay.setVisible(false); 
         } else {
-            pnBoLocNgay.setVisible(true);  // Hiện chọn ngày cho các mục khác
+            pnBoLocNgay.setVisible(true);  
         }
-        // =================================
 
-        // Cập nhật switch
         switch (chucNang) {
             case 0: hienThiDashboard(); break;
             case 1: thongKeDoanhThuTheoNgay(); break;
@@ -423,20 +390,32 @@ public class QuanLyThongKe extends JPanel {
         }
     }
 
-    // helper: convert java.util.Date -> java.sql.Date (or null)
     private java.sql.Date toSqlDate(Date d) {
         return (d == null) ? null : new java.sql.Date(d.getTime());
     }
 
     // ==================================================================
-    // == CÁC HÀM MỚI CHO DASHBOARD VÀ CARDLAYOUT
+    // == HÀM MỚI: LẤY NGÀY BẮT ĐẦU AN TOÀN (TRÁNH NULL)
+    // ==================================================================
+    // Nếu dateFrom bị null (trống), hàm này trả về 01/01/2000
+    private Date getSafeFromDate() {
+        Date d = dateFrom.getDate();
+        if (d == null) {
+            Calendar cal = Calendar.getInstance();
+            cal.set(2000, Calendar.JANUARY, 1);
+            return cal.getTime();
+        }
+        return d;
+    }
+
+    // ==================================================================
+    // == DASHBOARD
     // ==================================================================
     
     private JPanel createDashboardPanel() {
-        JPanel panel = new JPanel(new GridLayout(2, 2, 10, 10)); // Layout 2x2
+        JPanel panel = new JPanel(new GridLayout(2, 2, 10, 10)); 
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        // Thêm các ô chờ
         panel.add(new JLabel("Đang tải biểu đồ...", SwingConstants.CENTER));
         panel.add(new JLabel("Đang tải biểu đồ...", SwingConstants.CENTER));
         panel.add(new JLabel("Đang tải biểu đồ...", SwingConstants.CENTER));
@@ -445,49 +424,44 @@ public class QuanLyThongKe extends JPanel {
     }
 
     private void hienThiDashboard() {
-        // Quan trọng: Gỡ JScrollPane ra khỏi panel chi tiết (nếu có)
         if (tableScrollPane.getParent() != null) {
             tableScrollPane.getParent().remove(tableScrollPane);
         }
 
-        // Tải/làm mới dữ liệu cho các biểu đồ
         updateDashboardCharts();
         
-        // Chuyển sang thẻ dashboard
         centerCardLayout.show(centerContentPanel, VIEW_DASHBOARD);
         
-        // Xóa bộ lọc cũ trên bảng (nếu có)
         modelThongKe.setRowCount(0);
         modelThongKe.setColumnIdentifiers(new String[]{"Số thứ tự", "Thông tin", "Giá trị"});
         
-        // Buộc JTable cập nhật lại tiêu đề (chuyển về generic)
         tableThongKe.getTableHeader().revalidate();
         tableThongKe.getTableHeader().repaint();
     }
 
     private void updateDashboardCharts() {
         dashboardPanel.removeAll();
-        dashboardPanel.setLayout(new GridLayout(2, 2, 10, 10)); // Đặt lại layout
+        dashboardPanel.setLayout(new GridLayout(2, 2, 10, 10)); 
 
-        Date tuNgay = dateFrom.getDate();
-        Date denNgay = dateTo.getDate();
+        // <<< SỬA: Sử dụng getSafeFromDate() thay vì dateFrom.getDate() >>>
+        Date tuNgay = getSafeFromDate();
+        Date denNgay = getEndOfDay(dateTo.getDate());
+        
+        // Nếu ngày kết thúc chưa chọn thì lấy hôm nay
+        if (denNgay == null) denNgay = getEndOfDay(new Date());
 
-        // 1. Biểu đồ Doanh thu theo ngày (Line Chart)
         ChartPanel revenueChart = createRevenueByDayChart(tuNgay, denNgay);
         revenueChart.setBorder(BorderFactory.createTitledBorder("Doanh thu theo ngày (Đã thanh toán)"));
         dashboardPanel.add(revenueChart);
 
-        // 2. Biểu đồ Top 5 Sản phẩm (Bar Chart)
         ChartPanel topProductsChart = createTopProductsChart(tuNgay, denNgay);
         topProductsChart.setBorder(BorderFactory.createTitledBorder("Top 5 sản phẩm bán chạy"));
         dashboardPanel.add(topProductsChart);
 
-        // 3. Biểu đồ Top 5 Khách hàng (Bar Chart)
         ChartPanel topCustomersChart = createTopCustomersChart(tuNgay, denNgay);
         topCustomersChart.setBorder(BorderFactory.createTitledBorder("Top 5 khách hàng"));
         dashboardPanel.add(topCustomersChart);
         
-        // 4. BIỂU ĐỒ MỚI: Doanh thu theo tháng
         ChartPanel revenueMonthChart = createRevenueByMonthChart(tuNgay, denNgay);
         revenueMonthChart.setBorder(BorderFactory.createTitledBorder("Doanh thu theo tháng (trong kỳ)"));
         dashboardPanel.add(revenueMonthChart);
@@ -495,13 +469,12 @@ public class QuanLyThongKe extends JPanel {
         dashboardPanel.revalidate();
         dashboardPanel.repaint();
         
-        // Cập nhật 3 thẻ summary
         updateSummaryCards(tuNgay, denNgay);
     }
     
     private void updateSummaryCards(Date tuNgay, Date denNgay) {
         List<HoaDon> listHD_raw = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay));
-        List<HoaDon> listHD = filterHoaDon(listHD_raw); // <<< LỌC HÓA ĐƠN
+        List<HoaDon> listHD = filterHoaDon(listHD_raw); 
         
         if (listHD == null) listHD = new ArrayList<>();
 
@@ -510,23 +483,19 @@ public class QuanLyThongKe extends JPanel {
             tongDoanhThu += hd.getTongTien();
         }
         int tongDonHang = listHD.size();
-        int tongSL = tinhTongSoLuongBan(tuNgay, denNgay); // (Hàm này cũng đã được lọc)
+        int tongSL = tinhTongSoLuongBan(tuNgay, denNgay); 
         
         lblTongDoanhThu.setText(df.format(tongDoanhThu) + " đ");
         lblTongDonHang.setText(String.valueOf(tongDonHang));
         lblTongSoLuong.setText(String.valueOf(tongSL));
     }
 
-
     // ==================================================================
-    // == CÁC HÀM TẠO BIỂU ĐỒ (CHO DASHBOARD VÀ CHI TIẾT)
+    // == CÁC HÀM TẠO BIỂU ĐỒ
     // ==================================================================
-
- // Trong QuanLyThongKe.java
 
     private ChartPanel createRevenueByDayChart(Date tuNgay, Date denNgay, String title) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        // getDataDoanhThuTheoNgay đã được sửa để lọc
         Map<String, Float> doanhThuTheoNgay = getDataDoanhThuTheoNgay(tuNgay, denNgay);
 
         for (Map.Entry<String, Float> entry : doanhThuTheoNgay.entrySet()) {
@@ -538,25 +507,20 @@ public class QuanLyThongKe extends JPanel {
                 dataset, PlotOrientation.VERTICAL,
                 false, true, false); 
                 
-            // === ÁP DỤNG THEME HIỆN ĐẠI ===
-            applyModernTheme(lineChart); // Hàm này sẽ lấy tiêu đề và định dạng font
-            // ==============================
+        applyModernTheme(lineChart); 
 
-            ChartPanel chartPanel = new ChartPanel(lineChart);
-            chartPanel.setPreferredSize(new Dimension(0, 250)); // Set chiều cao
+        ChartPanel chartPanel = new ChartPanel(lineChart);
+        chartPanel.setPreferredSize(new Dimension(0, 250)); 
        
-            return chartPanel;
+        return chartPanel;
     }
 
-    // Cập nhật lại các chỗ gọi trong Dashboard (Giữ nguyên giao diện dashboard)
     private ChartPanel createRevenueByDayChart(Date tuNgay, Date denNgay) {
-        // Gọi lại hàm mới với tiêu đề mặc định cho Dashboard
         return createRevenueByDayChart(tuNgay, denNgay, "");
     }
     
     private ChartPanel createTopProductsChart(Date tuNgay, Date denNgay) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        // getDataSanPhamBanChay đã được sửa để lọc
         Map<String, Integer> soLuongBan = getDataSanPhamBanChay(tuNgay, denNgay).getKey();
         
         List<Map.Entry<String, Integer>> sortedList = new ArrayList<>(soLuongBan.entrySet());
@@ -564,7 +528,7 @@ public class QuanLyThongKe extends JPanel {
         
         int count = 0;
         for (Map.Entry<String, Integer> entry : sortedList) {
-            if (count >= 5) break; // Chỉ lấy Top 5
+            if (count >= 5) break; 
             Giay giay = giayDAO.getById(entry.getKey());
             String tenGiay = (giay != null) ? giay.getTenGiay() : entry.getKey();
             dataset.addValue(entry.getValue(), "Số lượng", tenGiay);
@@ -573,21 +537,18 @@ public class QuanLyThongKe extends JPanel {
 
         JFreeChart barChart = ChartFactory.createBarChart(
             "", "Sản phẩm", "Số lượng bán",
-            dataset, PlotOrientation.HORIZONTAL, // Biểu đồ cột ngang
+            dataset, PlotOrientation.HORIZONTAL, 
             false, true, false);
             
-        // === ÁP DỤNG THEME HIỆN ĐẠI ===
         applyModernTheme(barChart);
-        // ==============================
             
         ChartPanel chartPanel = new ChartPanel(barChart);
-        chartPanel.setPreferredSize(new Dimension(0, 250)); // Set chiều cao
+        chartPanel.setPreferredSize(new Dimension(0, 250)); 
         return chartPanel;
     }
 
     private ChartPanel createTopCustomersChart(Date tuNgay, Date denNgay) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        // getDataTopKhachHang đã được sửa để lọc
         Map<String, Float> tongTienKH = getDataTopKhachHang(tuNgay, denNgay).getKey();
         
         List<Map.Entry<String, Float>> sortedList = new ArrayList<>(tongTienKH.entrySet());
@@ -595,7 +556,7 @@ public class QuanLyThongKe extends JPanel {
         
         int count = 0;
         for (Map.Entry<String, Float> entry : sortedList) {
-            if (count >= 5) break; // Chỉ lấy Top 5
+            if (count >= 5) break; 
             KhachHang kh = khachHangDAO.getById(entry.getKey());
             String tenKH = (kh != null) ? kh.getTenKH() : entry.getKey();
             dataset.addValue(entry.getValue(), "Chi tiêu", tenKH);
@@ -607,25 +568,23 @@ public class QuanLyThongKe extends JPanel {
             dataset, PlotOrientation.VERTICAL,
             false, true, false);
             
-        // === ÁP DỤNG THEME HIỆN ĐẠI ===
         applyModernTheme(barChart);
-        // ==============================
             
         ChartPanel chartPanel = new ChartPanel(barChart);
-        chartPanel.setPreferredSize(new Dimension(0, 250)); // Set chiều cao
+        chartPanel.setPreferredSize(new Dimension(0, 250)); 
         return chartPanel;
     }
 
     private ChartPanel createRevenueByMonthChart(Date tuNgay, Date denNgay) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
         List<HoaDon> listHD_raw = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay));
-        List<HoaDon> listHD = filterHoaDon(listHD_raw); // <<< LỌC HÓA ĐƠN
+        List<HoaDon> listHD = filterHoaDon(listHD_raw); 
         
         if (listHD == null) listHD = new ArrayList<>();
         
         Map<String, Float> doanhThuTheoThang = new TreeMap<>();
         
-        for (HoaDon hd : listHD) { // Dùng list đã lọc
+        for (HoaDon hd : listHD) { 
             if (hd == null || hd.getNgayLap() == null) continue;
             String thang = monthFormat.format(hd.getNgayLap());
             doanhThuTheoThang.put(thang, doanhThuTheoThang.getOrDefault(thang, 0f) + hd.getTongTien());
@@ -640,12 +599,10 @@ public class QuanLyThongKe extends JPanel {
             dataset, PlotOrientation.VERTICAL,
             false, true, false);
             
-        // === ÁP DỤNG THEME HIỆN ĐẠI ===
         applyModernTheme(barChart);
-        // ==============================
         
         ChartPanel chartPanel = new ChartPanel(barChart);
-        chartPanel.setPreferredSize(new Dimension(0, 250)); // Set chiều cao
+        chartPanel.setPreferredSize(new Dimension(0, 250)); 
         return chartPanel;
     }
     
@@ -656,12 +613,12 @@ public class QuanLyThongKe extends JPanel {
 
     private Map<String, Float> getDataDoanhThuTheoNgay(Date tuNgay, Date denNgay) {
         List<HoaDon> listHD_raw = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay));
-        List<HoaDon> listHD = filterHoaDon(listHD_raw); // <<< LỌC HÓA ĐƠN
+        List<HoaDon> listHD = filterHoaDon(listHD_raw); 
         
         if (listHD == null) listHD = new ArrayList<>();
         
         Map<String, Float> doanhThuTheoNgay = new TreeMap<>();
-        for (HoaDon hd : listHD) { // Dùng list đã lọc
+        for (HoaDon hd : listHD) { 
             if (hd == null || hd.getNgayLap() == null) continue;
             String ngay = sdf.format(hd.getNgayLap());
             doanhThuTheoNgay.put(ngay, doanhThuTheoNgay.getOrDefault(ngay, 0f) + hd.getTongTien());
@@ -671,14 +628,14 @@ public class QuanLyThongKe extends JPanel {
     
     private Map.Entry<Map<String, Integer>, Map<String, Float>> getDataSanPhamBanChay(Date tuNgay, Date denNgay) {
         List<HoaDon> listHD_raw = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay));
-        List<HoaDon> listHD = filterHoaDon(listHD_raw); // <<< LỌC HÓA ĐƠN
+        List<HoaDon> listHD = filterHoaDon(listHD_raw); 
         
         if (listHD == null) listHD = new ArrayList<>();
 
         Map<String, Integer> soLuongBan = new HashMap<>();
         Map<String, Float> doanhThuSP = new HashMap<>();
 
-        for (HoaDon hd : listHD) { // Dùng list đã lọc
+        for (HoaDon hd : listHD) { 
             if (hd == null) continue;
             List<ChiTietHoaDon> listCT = chiTietHDDAO.getByHoaDon(hd.getIdHD());
             if (listCT == null) continue;
@@ -694,14 +651,14 @@ public class QuanLyThongKe extends JPanel {
     
     private Map.Entry<Map<String, Float>, Map<String, Integer>> getDataTopKhachHang(Date tuNgay, Date denNgay) {
         List<HoaDon> listHD_raw = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay));
-        List<HoaDon> listHD = filterHoaDon(listHD_raw); // <<< LỌC HÓA ĐƠN
+        List<HoaDon> listHD = filterHoaDon(listHD_raw); 
         
         if (listHD == null) listHD = new ArrayList<>();
 
         Map<String, Float> tongTienKH = new HashMap<>();
         Map<String, Integer> soDonKH = new HashMap<>();
 
-        for (HoaDon hd : listHD) { // Dùng list đã lọc
+        for (HoaDon hd : listHD) { 
             if (hd == null) continue;
             String idKH = hd.getIdKH();
             tongTienKH.put(idKH, tongTienKH.getOrDefault(idKH, 0f) + hd.getTongTien());
@@ -711,22 +668,21 @@ public class QuanLyThongKe extends JPanel {
     }
 
     // ==================================================================
-    // == CÁC HÀM THỐNG KÊ (ĐÃ CẬP NHẬT ĐỂ HIỂN THỊ CHART + TABLE)
+    // == CÁC HÀM THỐNG KÊ (ĐÃ SỬA ĐỂ XỬ LÝ NULL)
     // ==================================================================
 
- // Trong QuanLyThongKe.java
     private void thongKeDoanhThuTheoNgay() {
         modelThongKe.setRowCount(0);
-        Date tuNgay = dateFrom.getDate();
-        // <<< SỬA: Lấy đến hết ngày (23:59:59) >>>
+        
+        // <<< SỬA: Dùng getSafeFromDate() và bỏ check null tuNgay >>>
+        Date tuNgay = getSafeFromDate();
         Date denNgay = getEndOfDay(dateTo.getDate()); 
 
-        if (tuNgay == null || denNgay == null) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn khoảng thời gian!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+        if (denNgay == null) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày kết thúc!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // Lấy dữ liệu với thời gian đã chỉnh sửa
         Map<String, Float> doanhThuTheoNgay = getDataDoanhThuTheoNgay(tuNgay, denNgay);
         List<HoaDon> listHD_raw = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay)); 
         List<HoaDon> listHD = filterHoaDon(listHD_raw); 
@@ -748,7 +704,6 @@ public class QuanLyThongKe extends JPanel {
         tableThongKe.getTableHeader().revalidate();
         tableThongKe.getTableHeader().repaint();
 
-        // Đổ dữ liệu vào bảng
         for (Map.Entry<String, Float> entry : doanhThuTheoNgay.entrySet()) {
             String ngay = entry.getKey();
             float doanhThu = entry.getValue();
@@ -761,7 +716,6 @@ public class QuanLyThongKe extends JPanel {
 
         updateSummaryCards(tuNgay, denNgay);
         
-        // Vẽ biểu đồ
         ChartPanel chartPanel = createRevenueByDayChart(tuNgay, denNgay, "BIỂU ĐỒ DOANH THU THEO NGÀY");
         
         pnDetailDoanhThuNgay.removeAll(); 
@@ -780,16 +734,15 @@ public class QuanLyThongKe extends JPanel {
     private void thongKeDoanhThuTheoThang() {
         modelThongKe.setRowCount(0);
         
-        // 1. Lấy ngày từ bộ lọc và xử lý EndOfDay (Thêm đoạn này)
-        Date tuNgay = dateFrom.getDate();
+        // <<< SỬA: Dùng getSafeFromDate() và bỏ check null tuNgay >>>
+        Date tuNgay = getSafeFromDate();
         Date denNgay = getEndOfDay(dateTo.getDate()); 
 
-        if (tuNgay == null || denNgay == null) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn khoảng thời gian!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+        if (denNgay == null) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày kết thúc!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // 2. Sửa getAll() thành getByDateRange(...) (Sửa đoạn này)
         List<HoaDon> listHD_raw = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay)); 
         List<HoaDon> listHD = filterHoaDon(listHD_raw); 
         
@@ -828,8 +781,7 @@ public class QuanLyThongKe extends JPanel {
             tongDonHang += soDon;
         }
 
-        // Cập nhật thẻ tổng quan
-        updateSummaryCards(tuNgay, denNgay); // Sửa tham số truyền vào
+        updateSummaryCards(tuNgay, denNgay); 
         lblTongDoanhThu.setText(df.format(tongDoanhThu) + " đ (Tổng)"); 
 
         JFreeChart barChart = ChartFactory.createBarChart(
@@ -853,10 +805,16 @@ public class QuanLyThongKe extends JPanel {
 
     private void thongKeSanPhamBanChay() {
         modelThongKe.setRowCount(0);
-        Date tuNgay = dateFrom.getDate();
+        // <<< SỬA: Dùng getSafeFromDate() >>>
+        Date tuNgay = getSafeFromDate();
         Date denNgay = getEndOfDay(dateTo.getDate());
 
-        // Hàm này đã được lọc
+        // Logic của các hàm get... đã tự xử lý nếu range hợp lệ, ta chỉ cần đảm bảo tuNgay ko null (đã xử lý ở getSafe)
+        if (denNgay == null) {
+             JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày kết thúc!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+             return;
+        }
+
         Map.Entry<Map<String, Integer>, Map<String, Float>> data = getDataSanPhamBanChay(tuNgay, denNgay);
         Map<String, Integer> soLuongBan = data.getKey();
         Map<String, Float> doanhThuSP = data.getValue();
@@ -867,17 +825,15 @@ public class QuanLyThongKe extends JPanel {
         String[] columns = {"Số thứ tự", "Mã SP", "Tên sản phẩm", "SL bán", "Doanh thu"};
         modelThongKe.setColumnIdentifiers(columns);
         
-        // === SỬA LỖI HIỂN THỊ TIÊU ĐỀ BẢNG ===
         tableThongKe.getTableHeader().revalidate();
         tableThongKe.getTableHeader().repaint();
-        // ====================================
         
-        DefaultCategoryDataset chartDataset = new DefaultCategoryDataset(); // Dataset cho chart
+        DefaultCategoryDataset chartDataset = new DefaultCategoryDataset(); 
 
         int stt = 1;
         int tongSL = 0;
         float tongDT = 0;
-        int topN = 10; // Chỉ vẽ biểu đồ cho Top 10
+        int topN = 10; 
 
         for (Map.Entry<String, Integer> entry : sortedList) {
             String idGiay = entry.getKey();
@@ -888,7 +844,7 @@ public class QuanLyThongKe extends JPanel {
 
             modelThongKe.addRow(new Object[]{ stt, idGiay, tenGiay, soLuong, df.format(doanhThu) + " đ" });
             
-            if (stt <= topN) { // Chỉ thêm Top N vào biểu đồ
+            if (stt <= topN) { 
                 chartDataset.addValue(soLuong, "Số lượng", tenGiay + " (ID: " + idGiay + ")");
             }
             
@@ -897,20 +853,16 @@ public class QuanLyThongKe extends JPanel {
             tongDT += doanhThu;
         }
 
-        // Cập nhật summary cards (hàm này đã được lọc)
         updateSummaryCards(tuNgay, denNgay);
         
-        // === NÂNG CẤP: TẠO BIỂU ĐỒ VÀ HIỂN THỊ PANEL ===
         JFreeChart barChart = ChartFactory.createBarChart(
             "Biểu đồ Top " + topN + " sản phẩm bán chạy", "Sản phẩm", "Số lượng",
             chartDataset, PlotOrientation.HORIZONTAL, false, true, false);
             
-        // === ÁP DỤNG THEME HIỆN ĐẠI ===
         applyModernTheme(barChart);
-        // ==============================
             
         ChartPanel chartPanel = new ChartPanel(barChart);
-        chartPanel.setPreferredSize(new Dimension(0, 300)); // Cần cao hơn
+        chartPanel.setPreferredSize(new Dimension(0, 300)); 
 
         pnDetailSanPhamBanChay.removeAll();
         pnDetailSanPhamBanChay.add(chartPanel, BorderLayout.NORTH);
@@ -924,30 +876,34 @@ public class QuanLyThongKe extends JPanel {
 
     private void thongKeNhapHang() {
         modelThongKe.setRowCount(0);
-        Date tuNgay = dateFrom.getDate();
+        // <<< SỬA: Dùng getSafeFromDate() >>>
+        Date tuNgay = getSafeFromDate();
         Date denNgay = getEndOfDay(dateTo.getDate());
 
+        if (denNgay == null) {
+             JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày kết thúc!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+             return;
+        }
+
         List<NhapKho> listNK_raw = nhapKhoDAO.getByDate(toSqlDate(tuNgay), toSqlDate(denNgay));
-        List<NhapKho> listNK = filterNhapKho(listNK_raw); // <<< LỌC PHIẾU NHẬP
+        List<NhapKho> listNK = filterNhapKho(listNK_raw); 
         
         if (listNK == null) listNK = new ArrayList<>();
 
         String[] columns = {"Số thứ tự", "Mã phiếu", "Ngày nhập", "Nhà cung cấp", "Tổng tiền", "Trạng thái"};
         modelThongKe.setColumnIdentifiers(columns);
         
-        // === SỬA LỖI HIỂN THỊ TIÊU ĐỀ BẢNG ===
         tableThongKe.getTableHeader().revalidate();
         tableThongKe.getTableHeader().repaint();
-        // ====================================
 
         DefaultCategoryDataset chartDataset = new DefaultCategoryDataset();
 
         int stt = 1;
         float tongTien = 0;
         int tongSL = 0;
-        Map<String, Float> chiTheoNgay = new TreeMap<>(); // Dữ liệu cho chart
+        Map<String, Float> chiTheoNgay = new TreeMap<>(); 
 
-        for (NhapKho nk : listNK) { // Dùng list đã lọc
+        for (NhapKho nk : listNK) { 
             if (nk == null) continue;
             modelThongKe.addRow(new Object[]{
                 stt++, nk.getIdNhapKho(), nk.getNgayNhap() == null ? "N/A" : sdf.format(nk.getNgayNhap()),
@@ -956,7 +912,6 @@ public class QuanLyThongKe extends JPanel {
 
             tongTien += nk.getTongTien();
             
-            // Tính tổng SL
             List<ChiTietNhapKho> listCT = chiTietNKDAO.getByNhapKho(nk.getIdNhapKho());
             if (listCT != null) {
                 for (ChiTietNhapKho ct : listCT) {
@@ -964,7 +919,6 @@ public class QuanLyThongKe extends JPanel {
                 }
             }
             
-            // Gom dữ liệu cho chart
             if (nk.getNgayNhap() != null) {
                 String ngay = sdf.format(nk.getNgayNhap());
                 chiTheoNgay.put(ngay, chiTheoNgay.getOrDefault(ngay, 0f) + nk.getTongTien());
@@ -975,19 +929,15 @@ public class QuanLyThongKe extends JPanel {
             chartDataset.addValue(entry.getValue(), "Chi phí nhập", entry.getKey());
         }
 
-        // Cập nhật summary (hiển thị chi phí nhập thay cho doanh thu)
         lblTongDoanhThu.setText(df.format(tongTien) + " đ");
         lblTongDonHang.setText(String.valueOf(listNK.size()));
         lblTongSoLuong.setText(String.valueOf(tongSL));
 
-        // === NÂNG CẤP: TẠO BIỂU ĐỒ VÀ HIỂN THỊ PANEL ===
         JFreeChart lineChart = ChartFactory.createLineChart(
             "Biểu đồ chi phí nhập hàng theo ngày", "Ngày", "Chi phí",
             chartDataset, PlotOrientation.VERTICAL, false, true, false);
             
-        // === ÁP DỤNG THEME HIỆN ĐẠI ===
         applyModernTheme(lineChart);
-        // ==============================
             
         ChartPanel chartPanel = new ChartPanel(lineChart);
         chartPanel.setPreferredSize(new Dimension(0, 250));
@@ -1004,10 +954,15 @@ public class QuanLyThongKe extends JPanel {
 
     private void thongKeTopKhachHang() {
         modelThongKe.setRowCount(0);
-        Date tuNgay = dateFrom.getDate();
+        // <<< SỬA: Dùng getSafeFromDate() >>>
+        Date tuNgay = getSafeFromDate();
         Date denNgay = getEndOfDay(dateTo.getDate());
 
-        // Hàm này đã được lọc
+        if (denNgay == null) {
+             JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày kết thúc!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+             return;
+        }
+
         Map.Entry<Map<String, Float>, Map<String, Integer>> data = getDataTopKhachHang(tuNgay, denNgay);
         Map<String, Float> tongTienKH = data.getKey();
         Map<String, Integer> soDonKH = data.getValue();
@@ -1018,16 +973,14 @@ public class QuanLyThongKe extends JPanel {
         String[] columns = {"Số thứ tự", "Mã KH", "Tên khách hàng", "Số đơn", "Tổng chi tiêu"};
         modelThongKe.setColumnIdentifiers(columns);
         
-        // === SỬA LỖI HIỂN THỊ TIÊU ĐỀ BẢNG ===
         tableThongKe.getTableHeader().revalidate();
         tableThongKe.getTableHeader().repaint();
-        // ====================================
         
         DefaultCategoryDataset chartDataset = new DefaultCategoryDataset();
 
         int stt = 1;
         float tongDoanhThu = 0;
-        int topN = 10; // Chỉ vẽ biểu đồ cho Top 10
+        int topN = 10; 
 
         for (Map.Entry<String, Float> entry : sortedList) {
             String idKH = entry.getKey();
@@ -1038,7 +991,7 @@ public class QuanLyThongKe extends JPanel {
 
             modelThongKe.addRow(new Object[]{ stt, idKH, tenKH, soDon, df.format(tongTien) + " đ" });
 
-            if (stt <= topN) { // Chỉ thêm Top N vào biểu đồ
+            if (stt <= topN) { 
                 chartDataset.addValue(tongTien, "Chi tiêu", tenKH + " (ID: " + idKH + ")");
             }
 
@@ -1046,17 +999,13 @@ public class QuanLyThongKe extends JPanel {
             tongDoanhThu += tongTien;
         }
 
-        // Cập nhật summary cards (hàm này đã được lọc)
         updateSummaryCards(tuNgay, denNgay);
 
-        // === NÂNG CẤP: TẠO BIỂU ĐỒ VÀ HIỂN THỊ PANEL ===
         JFreeChart barChart = ChartFactory.createBarChart(
             "Biểu đồ Top " + topN + " khách hàng", "Khách hàng", "Tổng chi tiêu",
             chartDataset, PlotOrientation.VERTICAL, false, true, false);
             
-        // === ÁP DỤNG THEME HIỆN ĐẠI ===
         applyModernTheme(barChart);
-        // ==============================
             
         ChartPanel chartPanel = new ChartPanel(barChart);
         chartPanel.setPreferredSize(new Dimension(0, 250));
@@ -1071,28 +1020,18 @@ public class QuanLyThongKe extends JPanel {
         centerCardLayout.show(centerContentPanel, VIEW_TOP_KH);
     }
 
-    // =================================================================
-    // === SỬA: HÀM MỚI THAY THẾ HOÀN TOÀN HÀM baoCaoTongHop() CŨ
-    // =================================================================
-    /**
-     * THÊM MỚI: Hiển thị báo cáo tổng hợp (Doanh thu, Chi phí, Lợi nhuận)
-     * sử dụng framework Chart + Table có sẵn.
-     */
     private void hienThiBaoCaoTongHop() {
         modelThongKe.setRowCount(0);
         
-        // === SỬA: LẤY TOÀN BỘ DỮ LIỆU (KHÔNG DÙNG DATE FILTER) ===
-        // Vì người dùng không chọn ngày, ta mặc định thống kê toàn bộ thời gian
-        
-        List<HoaDon> listHD_raw = hoaDonDAO.getAll(); // Dùng getAll()
+        // Báo cáo tổng hợp lấy toàn bộ thời gian, không phụ thuộc date filter
+        List<HoaDon> listHD_raw = hoaDonDAO.getAll(); 
         List<HoaDon> listHD = filterHoaDon(listHD_raw);
         if (listHD == null) listHD = new ArrayList<>();
         
-        List<NhapKho> listNK_raw = nhapKhoDAO.getAll(); // Dùng getAll()
+        List<NhapKho> listNK_raw = nhapKhoDAO.getAll(); 
         List<NhapKho> listNK = filterNhapKho(listNK_raw);
         if (listNK == null) listNK = new ArrayList<>();
 
-        // Phần tính toán bên dưới giữ nguyên
         float tongDoanhThu = 0;
         float tongNhapHang = 0;
         int tongSLBan = 0;
@@ -1120,7 +1059,6 @@ public class QuanLyThongKe extends JPanel {
 
         float loiNhuan = tongDoanhThu - tongNhapHang;
 
-        // Cập nhật bảng
         String[] columns = {"Số thứ tự", "Hạng mục", "Giá trị"};
         modelThongKe.setColumnIdentifiers(columns);
         tableThongKe.getTableHeader().revalidate();
@@ -1140,12 +1078,10 @@ public class QuanLyThongKe extends JPanel {
         modelThongKe.addRow(new Object[]{7, "Tổng phiếu nhập", listNK.size()});
         modelThongKe.addRow(new Object[]{8, "Tổng sản phẩm đã nhập", tongSLNhap});
 
-        // Cập nhật Summary Cards (Hiển thị tổng quan toàn bộ)
         lblTongDoanhThu.setText(df.format(tongDoanhThu) + " đ");
         lblTongDonHang.setText(String.valueOf(listHD.size()));
         lblTongSoLuong.setText(String.valueOf(tongSLBan));
 
-        // Vẽ biểu đồ
         DefaultCategoryDataset chartDataset = new DefaultCategoryDataset();
         chartDataset.addValue(tongDoanhThu, "Giá trị", "Doanh thu");
         chartDataset.addValue(tongNhapHang, "Giá trị", "Chi phí nhập");
@@ -1168,27 +1104,17 @@ public class QuanLyThongKe extends JPanel {
 
         centerCardLayout.show(centerContentPanel, VIEW_BAO_CAO_TH);
     }
-    
-    // =================================================================
-    // === SỬA: XÓA HOÀN TOÀN HÀM baoCaoTongHop() CŨ
-    // =================================================================
-    /* // HÀM CŨ NÀY ĐÃ ĐƯỢC THAY THẾ BẰNG hienThiBaoCaoTongHop()
-    private void baoCaoTongHop() {
-        // ... (toàn bộ code cũ dùng JTextArea và JOptionPane đã bị xóa) ...
-    }
-    */
-
 
     // ====================== HÀM HỖ TRỢ ======================
     
     private int tinhTongSoLuongBan(Date tuNgay, Date denNgay) {
         List<HoaDon> listHD_raw = hoaDonDAO.getByDateRange(toSqlDate(tuNgay), toSqlDate(denNgay));
-        List<HoaDon> listHD = filterHoaDon(listHD_raw); // <<< LỌC HÓA ĐƠN
+        List<HoaDon> listHD = filterHoaDon(listHD_raw); 
         
         if (listHD == null) return 0;
         int tong = 0;
 
-        for (HoaDon hd : listHD) { // Dùng list đã lọc
+        for (HoaDon hd : listHD) { 
             if (hd == null) continue;
             List<ChiTietHoaDon> listCT = chiTietHDDAO.getByHoaDon(hd.getIdHD());
             if (listCT == null) continue;
@@ -1200,25 +1126,21 @@ public class QuanLyThongKe extends JPanel {
         return tong;
     }
 
- // Tìm và thay thế hàm locDuLieu() cũ bằng hàm này
     private void locDuLieu() {
-        Date tuNgay = dateFrom.getDate();
-        Date denNgay = getEndOfDay(dateTo.getDate()); // 23:59:59 của ngày được chọn
-
-        // === SỬA LỖI TẠI ĐÂY ===
-        // Thay vì lấy new Date() (giờ hiện tại), ta lấy "Cuối ngày hôm nay" để so sánh
-        // Điều này đảm bảo nếu chọn "Hôm nay" (23:59:59) thì vẫn hợp lệ
+        // <<< SỬA: Sử dụng getSafeFromDate() và nới lỏng validate >>>
+        Date tuNgay = getSafeFromDate();
+        Date denNgay = getEndOfDay(dateTo.getDate());
         Date cuoiNgayHomNay = getEndOfDay(new Date()); 
 
-        // 1. Kiểm tra chưa chọn ngày
-        if (tuNgay == null || denNgay == null) {
+        // 1. Chỉ kiểm tra ngày kết thúc (ngày bắt đầu đã được xử lý an toàn)
+        if (denNgay == null) {
             JOptionPane.showMessageDialog(this, 
-                "Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc!", 
+                "Vui lòng chọn ngày kết thúc!", 
                 "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // 2. Kiểm tra: Từ ngày KHÔNG ĐƯỢC lớn hơn Đến ngày
+        // 2. Kiểm tra: Từ ngày > Đến ngày
         if (tuNgay.after(denNgay)) {
             JOptionPane.showMessageDialog(this, 
                 "Ngày bắt đầu không được lớn hơn ngày kết thúc!", 
@@ -1227,21 +1149,17 @@ public class QuanLyThongKe extends JPanel {
         }
 
         // 3. Kiểm tra tương lai
-        // So sánh: Ngày chọn (23:59:59) > Ngày hôm nay (23:59:59) ?
-        // Nếu bằng nhau (cùng là hôm nay) thì .after() trả về false -> Hợp lệ.
-        if (tuNgay.after(cuoiNgayHomNay) || denNgay.after(cuoiNgayHomNay)) {
+        if (denNgay.after(cuoiNgayHomNay)) {
             JOptionPane.showMessageDialog(this, 
                 "Thời gian chọn không được ở trong tương lai!", 
                 "Lỗi thời gian", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // Nếu tất cả hợp lệ thì mới chạy chức năng
         xuLyChucNang(this.currentViewIndex);
     }
 
     private void xuatBaoCao() {
-        // Chỉ xuất báo cáo nếu đang ở chế độ xem bảng (bất kỳ panel chi tiết nào)
         if (!tableScrollPane.isShowing()) {
              JOptionPane.showMessageDialog(this,
                 "Chức năng xuất Excel chỉ dùng cho các báo cáo chi tiết (dạng bảng).\nVui lòng chọn một báo cáo chi tiết trước khi xuất.",
@@ -1271,7 +1189,6 @@ public class QuanLyThongKe extends JPanel {
                 }
                 writer.println();
 
-                // Write data
                 for (int i = 0; i < modelThongKe.getRowCount(); i++) {
                     for (int j = 0; j < modelThongKe.getColumnCount(); j++) {
                         Object cellData = modelThongKe.getValueAt(i, j);
@@ -1293,26 +1210,7 @@ public class QuanLyThongKe extends JPanel {
             }
         }
     }
-
-    // =================================================================
-    // === SỬA: XÓA HÀM xuatFileText() VÌ KHÔNG CÒN SỬ DỤNG
-    // =================================================================
-    /**
-     * THÊM MỚI: Hàm hỗ trợ xuất nội dung text ra file (cho Báo cáo tổng hợp)
-     * @param content Nội dung text cần xuất
-     * @param suggestedFileName Tên file gợi ý
-     */
-    /*
-    // HÀM NÀY KHÔNG CÒN CẦN THIẾT
-    private void xuatFileText(String content, String suggestedFileName) {
-        // ... (code đã bị xóa) ...
-    }
-    */
     
-    // ==========================================================
-    // == HÀM MỚI: CÁC HÀM LỌC DỮ LIỆU
-    // ==========================================================
-
     private List<HoaDon> filterHoaDon(List<HoaDon> rawList) {
         if (rawList == null) return new ArrayList<>();
         List<HoaDon> filteredList = new ArrayList<>();
@@ -1334,85 +1232,60 @@ public class QuanLyThongKe extends JPanel {
         }
         return filteredList;
     }
-
-    // ==========================================================
-    // == HÀM MỚI: ÁP DỤNG THEME HIỆN ĐẠI CHO BIỂU ĐỒ
-    // ==========================================================
     
     public void applyModernTheme(JFreeChart chart) {
-        
-        // === 1. ĐỊNH NGHĨA BẢNG MÀU TRẺ TRUNG ===
         final Paint[] PALETTE = new Paint[] {
-            new Color(26, 188, 156),  // Teal
-            new Color(52, 152, 219),  // Blue
-            new Color(155, 89, 182),  // Purple
-            new Color(241, 196, 15),  // Yellow
-            new Color(230, 126, 34),  // Orange
-            new Color(231, 76, 60),   // Red
-            new Color(46, 204, 113)   // Green
+            new Color(26, 188, 156), 
+            new Color(52, 152, 219), 
+            new Color(155, 89, 182), 
+            new Color(241, 196, 15), 
+            new Color(230, 126, 34), 
+            new Color(231, 76, 60), 
+            new Color(46, 204, 113)
         };
 
-        // === 2. TÙY CHỈNH CHUNG ===
         Font axisFont = new Font("Segoe UI", Font.PLAIN, 12);
-        Font titleFont = new Font("Segoe UI", Font.BOLD, 16);
-        Font plotFont = new Font("Segoe UI", Font.PLAIN, 13);
 
-        // Tắt viền và nền mặc định
         chart.setBackgroundPaint(Color.WHITE);
         chart.setAntiAlias(true);
         chart.setTextAntiAlias(true);
         
-        // Bỏ phần Chú thích (Legend) nếu có (biểu đồ của bạn không cần)
         if (chart.getLegend() != null) {
             chart.getLegend().setBackgroundPaint(Color.WHITE);
             chart.getLegend().setFrame(BlockBorder.NONE);
         }
 
-        // === 3. TÙY CHỈNH VÙNG VẼ (PLOT) ===
         Plot plot = chart.getPlot();
-        plot.setBackgroundPaint(Color.WHITE); // Nền vùng vẽ
-        plot.setOutlinePaint(null); // Bỏ đường viền quanh vùng vẽ
+        plot.setBackgroundPaint(Color.WHITE); 
+        plot.setOutlinePaint(null); 
 
         if (plot instanceof CategoryPlot) {
             CategoryPlot categoryPlot = (CategoryPlot) plot;
 
-            // Tùy chỉnh Gridlines (đường lưới)
             categoryPlot.setDomainGridlinesVisible(true);
             categoryPlot.setRangeGridlinesVisible(true);
-            categoryPlot.setDomainGridlinePaint(new Color(235, 235, 235)); // Màu xám rất nhạt
+            categoryPlot.setDomainGridlinePaint(new Color(235, 235, 235)); 
             categoryPlot.setRangeGridlinePaint(new Color(220, 220, 220));
 
-            // Tùy chỉnh Axes (trục)
             categoryPlot.getDomainAxis().setLabelFont(axisFont);
             categoryPlot.getDomainAxis().setTickLabelFont(axisFont);
             categoryPlot.getRangeAxis().setLabelFont(axisFont);
             categoryPlot.getRangeAxis().setTickLabelFont(axisFont);
             
-            // ==========================================================
-            // == <<< SỬA LỖI HIỂN THỊ SỐ (VD: 2E7) >>>
-            // ==========================================================
-            // Lấy trục Y (RangeAxis), là trục hiển thị số liệu
             org.jfree.chart.axis.NumberAxis rangeAxis = 
                 (org.jfree.chart.axis.NumberAxis) categoryPlot.getRangeAxis();
                 
-            // Sử dụng lớp CustomNumberFormat mới để định dạng (lớp này ở cuối file)
             rangeAxis.setNumberFormatOverride(new CustomNumberFormat()); 
-            // ==========================================================
-            
-            // === 4. TÙY CHỈNH RENDERER (THANH BAR, ĐƯỜNG LINE) ===
             
             if (categoryPlot.getRenderer() instanceof BarRenderer) {
                 BarRenderer renderer = (BarRenderer) categoryPlot.getRenderer();
                 
-                // **Quan trọng: Bỏ hiệu ứng gradient và đổ bóng**
                 renderer.setBarPainter(new StandardBarPainter());
                 renderer.setShadowVisible(false);
                 
-                // Tạo một renderer tùy chỉnh để TÔ MÀU CHO TỪNG CỘT
                 class CustomBarRenderer extends BarRenderer {
                     @Override
                     public Paint getItemPaint(int row, int col) {
-                        // Lấy màu từ bảng màu, xoay vòng
                         return PALETTE[col % PALETTE.length];
                     }
                 }
@@ -1420,40 +1293,29 @@ public class QuanLyThongKe extends JPanel {
                 CustomBarRenderer customRenderer = new CustomBarRenderer();
                 customRenderer.setBarPainter(new StandardBarPainter());
                 customRenderer.setShadowVisible(false);
-                customRenderer.setBaseItemLabelsVisible(false); // Tắt hiện số trên cột (nếu có)
+                customRenderer.setBaseItemLabelsVisible(false); 
                 
                 categoryPlot.setRenderer(customRenderer);
                 
             } else if (categoryPlot.getRenderer() instanceof LineAndShapeRenderer) {
                 LineAndShapeRenderer renderer = (LineAndShapeRenderer) categoryPlot.getRenderer();
-                
-                // Cho đường line đậm hơn
                 renderer.setBaseStroke(new BasicStroke(2.5f));
-                // Đặt màu cho series đầu tiên
-                renderer.setSeriesPaint(0, PALETTE[1]); // Dùng màu Blue
+                renderer.setSeriesPaint(0, PALETTE[1]); 
             }
         }
     }
     
-    // ==========================================================
-    // == <<< CLASS MỚI: ĐỊNH DẠNG SỐ (BỎ E7, THAY BẰNG Tr/N) >>>
-    // ==========================================================
-    /**
-     * Lớp nội bộ tùy chỉnh để định dạng các số lớn trên trục Y của biểu đồ.
-     * Chuyển đổi 1,000,000 thành "1 Tr"
-     * Chuyển đổi 100,000 thành "100 N"
-     */
     static class CustomNumberFormat extends NumberFormat {
-        private DecimalFormat df = new DecimalFormat("#.##"); // Định dạng số thập phân
+        private DecimalFormat df = new DecimalFormat("#.##"); 
 
         @Override
         public StringBuffer format(double number, StringBuffer toAppendTo, FieldPosition pos) {
             if (number >= 1_000_000_000) {
-                toAppendTo.append(df.format(number / 1_000_000_000)).append(" Tỷ"); // Tỷ
+                toAppendTo.append(df.format(number / 1_000_000_000)).append(" Tỷ"); 
             } else if (number >= 1_000_000) {
-                toAppendTo.append(df.format(number / 1_000_000)).append(" Tr"); // Triệu
+                toAppendTo.append(df.format(number / 1_000_000)).append(" Tr"); 
             } else if (number >= 1000) {
-                toAppendTo.append(df.format(number / 1000)).append(" N"); // Nghìn
+                toAppendTo.append(df.format(number / 1000)).append(" N"); 
             } else {
                 toAppendTo.append(df.format(number));
             }
@@ -1467,9 +1329,10 @@ public class QuanLyThongKe extends JPanel {
 
         @Override
         public Number parse(String source, ParsePosition parsePosition) {
-            return null; // Không cần thiết cho việc hiển thị biểu đồ
+            return null; 
         }
     }
+    
     private Date getEndOfDay(Date date) {
         if (date == null) return null;
         Calendar calendar = Calendar.getInstance();
@@ -1482,17 +1345,17 @@ public class QuanLyThongKe extends JPanel {
     }
     
     private void resetVaHienThiToanBo() {
-        Calendar cal = Calendar.getInstance();
-        cal.set(2020, Calendar.JANUARY, 1); 
-        dateFrom.setDate(cal.getTime());
+        // <<< SỬA: Đặt ngày bắt đầu về NULL (trống) thay vì 2020 >>>
+        dateFrom.setDate(null); 
         dateTo.setDate(new Date());
+        
         if (currentViewIndex == 0) {
             hienThiDashboard(); 
         } else if (currentViewIndex == 6) {
             hienThiBaoCaoTongHop();
         } else {
-            locDuLieu();
+            // Logic bên trong các hàm con đã tự xử lý getSafeFromDate() nên gọi lại được
+            xuLyChucNang(currentViewIndex);
         }
     }
-    
 }
